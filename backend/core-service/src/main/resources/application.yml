@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: core-service
+  
+  # Database Configuration (MySQL)
+  datasource:
+    url: jdbc:mysql://localhost:3306/zzz_core?serverTimezone=UTC&characterEncoding=UTF-8
+    username: zzz_user
+    password: zzz_password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
+
+  # Redis Configuration
+  data:
+    redis:
+      host: localhost
+      port: 6379
+    mongodb:
+      host: localhost
+      port: 27017
+      database: zzz_chat
+      authentication-database: admin
+
+  # RabbitMQ Configuration
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+# AI Service Integration (Custom Property)
+ai-service:
+  url: http://localhost:8000/api/v1
+
+server:
+  port: 8080

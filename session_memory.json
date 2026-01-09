@@ -1,0 +1,47 @@
+{
+    "last_updated": "2026-01-10",
+    "current_phase": "Phase 6: Polish & Beta",
+    "project_status": {
+        "completed_tasks": [
+            "Infra Setup (Docker, MySQL, Redis, Mongo)",
+            "Backend Core Setup (Spring Boot)",
+            "User & Couple Domain Implementation",
+            "Heartbeat Logic Implementation",
+            "Android Foreground Service Setup",
+            "AI Service Setup (FastAPI)",
+            "Vector DB Integration (Pinecone)",
+            "RAG Pipeline Implementation",
+            "LLM (OpenAI) Integration",
+            "Core Service <-> AI Service Communication",
+            "Backend Chat History API",
+            "Flutter Login/Signup UI & API Service",
+            "Flutter Main Screen (Status Sharing) & Couple Connection",
+            "Chat UI Implementation (Flutter)",
+            "Flutter Status Change Widget (Dialog)",
+            "Backend Chat Recap Logic (Sleep -> Online Trigger)",
+            "iOS Live Activity MethodChannel Bridge & Request Logic",
+            "Client (Flutter): AI Recap UI",
+            "Client (Native): iOS Home Screen Widget Code & Data Sharing",
+            "Fixed iOS Widget Compile Errors (ConfigurationAppIntent)",
+            "Verified Project Execution Environment (Docker, Spring Boot)",
+            "Verified All Testing Areas (Core, AI, Client)",
+            "Fixed AI Service Dependencies (Pinecone v3 Migration)",
+            "Implemented AI Service Mock Mode (Works without API Key)"
+        ],
+        "in_progress": "Optimization & Deployment",
+        "pending_tasks": [
+            "Character Animation Assets",
+            "Deploy & Optimization",
+            "Security Audit"
+        ]
+    },
+    "technical_decisions": {
+        "architecture": "MSA",
+        "backend_core": "Spring Boot (Java)",
+        "backend_ai": "FastAPI (Python)",
+        "client": "Flutter (Android/iOS)",
+        "db": "MySQL, Redis, MongoDB, Pinecone",
+        "llm": "OpenAI (GPT-3.5) + LangChain"
+    },
+    "notes_for_ai": "AI Service now supports Mock Mode when API Key is missing. iOS Widget code integrated in 'app/ios/ZZZWidget'. Core Service (8080), AI Service (8000). To run tests: Backend-Core (./gradlew test), Backend-AI (pytest), Client (flutter test)."
+}

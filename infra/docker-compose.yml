@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  # 1. RDB: User & Couple Data
+  mysql:
+    image: mysql:8.0
+    container_name: zzz-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: zzz_core
+      MYSQL_USER: zzz_user
+      MYSQL_PASSWORD: zzz_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  # 2. Cache & Status Store
+  redis:
+    image: redis:7.0-alpine
+    container_name: zzz-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  # 3. NoSQL: Chat Logs & Analytics
+  mongo:
+    image: mongo:6.0
+    container_name: zzz-mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: rootpassword
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  # 4. Message Broker: Event Bus
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: zzz-rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"   # AMQP protocol
+      - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  # 5. Core Service (Spring Boot)
+  core-service:
+    build:
+      context: ../backend/core-service
+      dockerfile: Dockerfile
+    container_name: zzz-core-service
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/zzz_core?serverTimezone=UTC&characterEncoding=UTF-8
+      - SPRING_DATASOURCE_USERNAME=zzz_user
+      - SPRING_DATASOURCE_PASSWORD=zzz_password
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_MONGODB_HOST=mongo
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - AI_SERVICE_URL=http://ai-service:8000/api/v1
+    depends_on:
+      - mysql
+      - redis
+      - mongo
+      - rabbitmq
+      - ai-service
+    restart: always
+
+  # 6. AI Service (Python FastAPI)
+  ai-service:
+    build:
+      context: ../backend/ai-service
+      dockerfile: Dockerfile
+    container_name: zzz-ai-service
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=changeme
+      - PINECONE_API_KEY=changeme
+    depends_on:
+      - redis
+      - mongo
+    volumes:
+      - ../backend/ai-service:/app
+    restart: always
+
+volumes:
+  mysql_data:
+  redis_data:
+  mongo_data:
+  rabbitmq_data:

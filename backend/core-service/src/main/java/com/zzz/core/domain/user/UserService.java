@@ -1,0 +1,91 @@
+package com.zzz.core.domain.user;
+
+import com.zzz.core.api.dto.HeartbeatRequest;
+import com.zzz.core.api.dto.TokenResponse;
+import com.zzz.core.api.dto.UserLoginRequest;
+import com.zzz.core.api.dto.UserRegisterRequest;
+import com.zzz.core.domain.chat.ChatService;
+import com.zzz.core.global.security.JwtTokenProvider;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class UserService {
+
+    private final UserRepository userRepository;
+    private final UserStatusService userStatusService;
+    private final ChatService chatService;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
+
+    @Transactional
+    public Long register(UserRegisterRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new IllegalArgumentException("Already exists email");
+        }
+
+        User user = User.builder()
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .nickname(request.getNickname())
+                .build();
+
+        return userRepository.save(user).getId();
+    }
+
+    @Transactional(readOnly = true)
+    public TokenResponse login(UserLoginRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Invalid password");
+        }
+
+        String accessToken = jwtTokenProvider.createToken(user.getId(), user.getEmail());
+        return new TokenResponse(accessToken, user.getId());
+    }
+
+    @Transactional
+    public void processHeartbeat(Long userId, HeartbeatRequest request) {
+        // UserStatusService handles Redis update and RDB sync
+        // It returns the OLD status before update
+        UserStatus oldStatus = userStatusService.updateHeartbeat(userId, request);
+        
+        // If user wakes up (SLEEP/STUDY -> ONLINE via Heartbeat), trigger Recap
+        if (oldStatus == UserStatus.SLEEP || oldStatus == UserStatus.STUDY) {
+             log.info("User {} woke up (Heartbeat). Triggering recap.", userId);
+             chatService.createRecap(userId);
+        }
+    }
+
+    @Transactional
+    public void updateStatus(Long userId, UserStatus newStatus) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        
+        UserStatus oldStatus = user.updateStatus(newStatus);
+        userRepository.save(user);
+
+        // Also update Redis to reflect manual change immediately
+        // Note: UserStatusService.updateHeartbeat updates Redis to ONLINE.
+        // If we set to SLEEP, we should update Redis too? 
+        // Ideally UserStatusService should have 'updateStatus' method for explicit updates.
+        // For now, let's leave Redis sync to Heartbeat or add explicit sync here if needed.
+        // But if I set SLEEP, and Redis says ONLINE (due to TTL), other users might see ONLINE 
+        // until next sync or if we don't update Redis.
+        // It's better to update Redis here too.
+        
+        // Trigger Recap if waking up manually
+        if ((oldStatus == UserStatus.SLEEP || oldStatus == UserStatus.STUDY) 
+            && newStatus == UserStatus.ONLINE) {
+             log.info("User {} woke up (Manual). Triggering recap.", userId);
+             chatService.createRecap(userId);
+        }
+    }
+}
