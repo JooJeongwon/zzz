@@ -9,7 +9,7 @@ class VectorStoreService:
     def __init__(self):
         self.api_key = settings.PINECONE_API_KEY
         self.index_name = "zzz-persona-index"
-        self.dimension = 1536 # OpenAI text-embedding-ada-002 standard
+        self.dimension = 768 # Gemini embedding-001 standard
         self.pc = None
         self.index = None
         

@@ -7,6 +7,9 @@ class Settings(BaseSettings):
     
     # OpenAI
     OPENAI_API_KEY: str = "changeme"
+
+    # Gemini
+    GEMINI_API_KEY: str = "changeme"
     
     # Vector DB (Pinecone)
     PINECONE_API_KEY: str = "changeme"

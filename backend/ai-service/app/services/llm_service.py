@@ -1,7 +1,7 @@
 import logging
 import random
 from typing import List, Optional
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain_core.messages import HumanMessage, SystemMessage
 from app.core.config import settings
 
@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class LLMService:
     def __init__(self):
-        self.api_key = settings.OPENAI_API_KEY
+        self.api_key = settings.GEMINI_API_KEY
         self.is_active = False
         self.mock_mode = False
         
@@ -18,29 +18,29 @@ class LLMService:
         
         if self.api_key and self.api_key != "changeme":
             try:
-                self.chat_model = ChatOpenAI(
-                    api_key=self.api_key,
-                    model="gpt-3.5-turbo", # 비용 효율적인 모델 사용
+                self.chat_model = ChatGoogleGenerativeAI(
+                    google_api_key=self.api_key,
+                    model="gemini-pro",
                     temperature=0.7
                 )
-                self.embeddings = OpenAIEmbeddings(
-                    api_key=self.api_key,
-                    model="text-embedding-ada-002"
+                self.embeddings = GoogleGenerativeAIEmbeddings(
+                    google_api_key=self.api_key,
+                    model="models/embedding-001"
                 )
                 self.is_active = True
-                logger.info("LLMService initialized successfully.")
+                logger.info("LLMService initialized successfully with Gemini.")
             except Exception as e:
                 logger.error(f"Failed to initialize LLMService: {e}")
                 self.mock_mode = True
         else:
-            logger.warning("OpenAI API Key is missing. Switching to Mock Mode.")
+            logger.warning("Gemini API Key is missing. Switching to Mock Mode.")
             self.mock_mode = True
 
     def get_embedding(self, text: str) -> Optional[List[float]]:
         """Generate embedding for a given text."""
         if self.mock_mode:
-            # Return dummy embedding vector of size 1536 (standard OpenAI size)
-            return [0.1] * 1536
+            # Return dummy embedding vector of size 768 (Gemini embedding-001 size)
+            return [0.1] * 768
 
         if not self.is_active or not self.embeddings:
             logger.warning("Embeddings model not active.")
