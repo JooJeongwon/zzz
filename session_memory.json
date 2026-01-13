@@ -29,7 +29,8 @@
             "Implemented AI Service Mock Mode (Works without API Key)",
             "Fixed iOS Build Issues (Widget Extensions, Live Activities)",
             "Fixed Backend Core Startup Failure (Missing jwt.secret)",
-            "Fixed Client Infinite Loop on 403 Error (HomeScreen)"
+            "Fixed Client Infinite Loop on 403 Error (HomeScreen)",
+            "Created Root .gitignore File"
         ],
         "in_progress": "Optimization & Deployment",
         "pending_tasks": [

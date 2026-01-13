@@ -74,57 +74,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # 5. Core Service (Spring Boot)
-  core-service:
-    build:
-      context: ../backend/core-service
-      dockerfile: Dockerfile
-    container_name: zzz-core-service
-    ports:
-      - "8080:8080"
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/zzz_core?serverTimezone=UTC&characterEncoding=UTF-8
-      - SPRING_DATASOURCE_USERNAME=zzz_user
-      - SPRING_DATASOURCE_PASSWORD=zzz_password
-      - SPRING_DATA_REDIS_HOST=redis
-      - SPRING_DATA_MONGODB_HOST=mongo
-      - SPRING_RABBITMQ_HOST=rabbitmq
-      - AI_SERVICE_URL=http://ai-service:8000/api/v1
-    depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      mongo:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      ai-service:
-        condition: service_started
-    restart: always
-
-  # 6. AI Service (Python FastAPI)
-  ai-service:
-    build:
-      context: ../backend/ai-service
-      dockerfile: Dockerfile
-    container_name: zzz-ai-service
-    ports:
-      - "8000:8000"
-    environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-changeme}
-      - PINECONE_API_KEY=${PINECONE_API_KEY:-changeme}
-      - REDIS_HOST=redis
-      - MONGO_HOST=mongo
-    depends_on:
-      redis:
-        condition: service_healthy
-      mongo:
-        condition: service_healthy
-    volumes:
-      - ../backend/ai-service:/app
-    restart: always
-
 volumes:
   mysql_data:
   redis_data:

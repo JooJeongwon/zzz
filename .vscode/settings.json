@@ -1,7 +1,0 @@
-{
-  "java.import.exclusions": [
-    "**/_native_backup/**"
-  ],
-  "java.compile.nullAnalysis.mode": "automatic",
-  "java.configuration.updateBuildConfiguration": "automatic"
-}

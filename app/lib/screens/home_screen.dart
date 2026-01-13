@@ -71,7 +71,6 @@ class _HomeScreenState extends State<HomeScreen> {
               _partnerStatus = status;
               _updateWidget(status);
           }
-          _isLoading = false;
         });
       }
     } catch (e) {
@@ -83,6 +82,12 @@ class _HomeScreenState extends State<HomeScreen> {
           );
           _logout();
         }
+      }
+    } finally {
+      if (mounted && _isLoading) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }

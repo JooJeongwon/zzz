@@ -26,6 +26,8 @@ spring:
       host: localhost
       port: 27017
       database: zzz_chat
+      username: root
+      password: rootpassword
       authentication-database: admin
 
   # RabbitMQ Configuration
