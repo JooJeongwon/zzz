@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 
 class NativeBridgeService {
-  static const MethodChannel _channel = MethodChannel('com.example.zzz/native');
+  static const MethodChannel _channel = MethodChannel('com.joo.zzz.app/heartbeat');
 
   /// Starts the iOS Live Activity.
   /// [status] - The current status (e.g., "SLEEP", "STUDY").

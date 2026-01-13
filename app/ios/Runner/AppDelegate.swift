@@ -13,13 +13,22 @@ import WidgetKit
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
         
-        let controller : FlutterViewController = window?.rootViewController as! FlutterViewController
-        let channel = FlutterMethodChannel(name: "com.example.zzz/native",
+        let controller = window?.rootViewController as! FlutterViewController
+        let channel = FlutterMethodChannel(name: "com.joo.zzz.app/heartbeat",
                                            binaryMessenger: controller.binaryMessenger)
         
         channel.setMethodCallHandler({ [weak self] (call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
             guard let self = self else { return }
             
+            if call.method == "startHeartbeat" {
+                // iOS doesn't have a direct equivalent to Android Foreground Service for this.
+                // We acknowledge the call to prevent MissingPluginException.
+                // In a real app, this might trigger Background Tasks or Location updates.
+                print("startHeartbeat called on iOS")
+                result("iOS Service Started (Mock)")
+                return
+            }
+
             if #available(iOS 16.1, *) {
                 self.handleActivityMethodCall(call, result: result)
             } else {
@@ -126,13 +135,13 @@ import WidgetKit
     }
 
     private func saveToSharedDefaults(status: String, message: String) {
-        if let userDefaults = UserDefaults(suiteName: "group.com.example.zzz") {
+        if let userDefaults = UserDefaults(suiteName: "group.com.joo.zzz") {
             userDefaults.set(status, forKey: "status")
             userDefaults.set(message, forKey: "message")
             userDefaults.set(Date().timeIntervalSince1970, forKey: "lastUpdated")
             WidgetCenter.shared.reloadAllTimelines()
         } else {
-            print("Error: Could not access App Group 'group.com.example.zzz'. Make sure it's enabled in Xcode capabilities.")
+            print("Error: Could not access App Group 'group.com.joo.zzz'. Make sure it's enabled in Xcode capabilities.")
         }
     }
 }

@@ -75,7 +75,7 @@ struct ZZZWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: ZZZWidgetProvider()) { entry in
             ZZZWidgetEntryView(entry: entry)
-                .containerBackground(.fill.tertiary, for: .widget)
+                .background(Color.gray) // Fallback for older iOS
         }
         .configurationDisplayName("Partner Status")
         .description("See your partner's current status.")
@@ -83,9 +83,9 @@ struct ZZZWidget: Widget {
     }
 }
 
-#Preview(as: .systemSmall) {
-    ZZZWidget()
-} timeline: {
-    ZZZWidgetEntry(date: Date(), title: "Joo", status: "Sleeping 😴", updatedAt: "10 min ago")
-    ZZZWidgetEntry(date: Date(), title: "Joo", status: "Studying 📚", updatedAt: "1 hour ago")
-}
+// #Preview(as: .systemSmall) {
+//     ZZZWidget()
+// } timeline: {
+//     ZZZWidgetEntry(date: Date(), title: "Joo", status: "Sleeping 😴", updatedAt: "10 min ago")
+//     ZZZWidgetEntry(date: Date(), title: "Joo", status: "Studying 📚", updatedAt: "1 hour ago")
+// }

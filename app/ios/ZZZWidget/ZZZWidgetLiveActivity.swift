@@ -9,72 +9,63 @@ import ActivityKit
 import WidgetKit
 import SwiftUI
 
-struct ZZZWidgetAttributes: ActivityAttributes {
-    public struct ContentState: Codable, Hashable {
-        // Dynamic stateful properties about your activity go here!
-        var emoji: String
-    }
-
-    // Fixed non-changing properties about your activity go here!
-    var name: String
-}
+// ZZZActivityAttributes is defined in Runner/ZZZActivityAttributes.swift 
+// and added to the ZZZWidgetExtension target.
 
 struct ZZZWidgetLiveActivity: Widget {
     var body: some WidgetConfiguration {
-        ActivityConfiguration(for: ZZZWidgetAttributes.self) { context in
+        ActivityConfiguration(for: ZZZActivityAttributes.self) { context in
             // Lock screen/banner UI goes here
-            VStack {
-                Text("Hello \(context.state.emoji)")
+            HStack {
+                // Character Image or Emoji (Placeholder)
+                Text(context.attributes.characterName == "MyPet" ? "🐶" : "👤")
+                    .font(.largeTitle)
+                    .padding()
+                
+                VStack(alignment: .leading) {
+                    Text(context.state.status)
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    Text(context.state.message)
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.8))
+                }
+                Spacer()
             }
-            .activityBackgroundTint(Color.cyan)
-            .activitySystemActionForegroundColor(Color.black)
+            .padding()
+            .activityBackgroundTint(Color.black.opacity(0.8))
+            .activitySystemActionForegroundColor(Color.white)
 
         } dynamicIsland: { context in
             DynamicIsland {
-                // Expanded UI goes here.  Compose the expanded UI through
-                // various regions, like leading/trailing/center/bottom
+                // Expanded UI
                 DynamicIslandExpandedRegion(.leading) {
-                    Text("Leading")
+                    Text("🐶")
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text("Trailing")
+                    Text(context.state.status)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    Text("Bottom \(context.state.emoji)")
-                    // more content
+                    Text(context.state.message)
+                        .font(.caption)
                 }
             } compactLeading: {
-                Text("L")
+                Text("🐶")
             } compactTrailing: {
-                Text("T \(context.state.emoji)")
+                Text(context.state.status)
             } minimal: {
-                Text(context.state.emoji)
+                Text("🐶")
             }
-            .widgetURL(URL(string: "http://www.apple.com"))
-            .keylineTint(Color.red)
+            .widgetURL(URL(string: "zzzapp://activity"))
+            .keylineTint(Color.blue)
         }
     }
 }
 
-extension ZZZWidgetAttributes {
-    fileprivate static var preview: ZZZWidgetAttributes {
-        ZZZWidgetAttributes(name: "World")
-    }
-}
-
-extension ZZZWidgetAttributes.ContentState {
-    fileprivate static var smiley: ZZZWidgetAttributes.ContentState {
-        ZZZWidgetAttributes.ContentState(emoji: "😀")
-     }
-     
-     fileprivate static var starEyes: ZZZWidgetAttributes.ContentState {
-         ZZZWidgetAttributes.ContentState(emoji: "🤩")
-     }
-}
-
-#Preview("Notification", as: .content, using: ZZZWidgetAttributes.preview) {
-   ZZZWidgetLiveActivity()
-} contentStates: {
-    ZZZWidgetAttributes.ContentState.smiley
-    ZZZWidgetAttributes.ContentState.starEyes
-}
+// Preview commented out for iOS 16 compatibility
+// #Preview("Notification", as: .content, using: ZZZActivityAttributes(characterName: "MyPet")) {
+//    ZZZWidgetLiveActivity()
+// } contentStates: {
+//     ZZZActivityAttributes.ContentState(status: "SLEEP", message: "Sleeping...")
+//     ZZZActivityAttributes.ContentState(status: "ONLINE", message: "Online!")
+// }

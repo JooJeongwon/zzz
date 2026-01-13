@@ -12,7 +12,7 @@ class ApiService {
   static String get baseUrl {
     if (kIsWeb) return 'http://localhost:8080/api/v1';
     if (Platform.isAndroid) return 'http://10.0.2.2:8080/api/v1';
-    return 'http://localhost:8080/api/v1';
+    return 'http://Joo-MacBookAir.local:8080/api/v1';
   }
 
   static Future<Map<String, String>> _getAuthHeaders() async {
@@ -104,11 +104,14 @@ class ApiService {
 
       if (response.statusCode == 200) {
         return PartnerStatus.fromJson(jsonDecode(utf8.decode(response.bodyBytes)));
+      } else if (response.statusCode == 403) {
+        throw HttpException('403 Forbidden');
       } else {
         debugPrint("GetPartnerStatus Failed: ${response.statusCode} ${response.body}");
         return null;
       }
     } catch (e) {
+      if (e.toString().contains('403 Forbidden')) rethrow;
       debugPrint("GetPartnerStatus Error: $e");
       return null;
     }

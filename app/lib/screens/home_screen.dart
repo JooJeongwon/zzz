@@ -59,19 +59,31 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _fetchPartnerStatus() async {
-    final status = await ApiService.getPartnerStatus();
-    if (status == null && _partnerStatus == null) {
-      // First load failed
-    }
-    
-    if (mounted) {
-      setState(() {
-        if (status != null) {
-            _partnerStatus = status;
-            _updateWidget(status);
+    try {
+      final status = await ApiService.getPartnerStatus();
+      if (status == null && _partnerStatus == null) {
+        // First load failed
+      }
+      
+      if (mounted) {
+        setState(() {
+          if (status != null) {
+              _partnerStatus = status;
+              _updateWidget(status);
+          }
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (e.toString().contains('403')) {
+        _timer?.cancel();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Session expired. Please login again.')),
+          );
+          _logout();
         }
-        _isLoading = false;
-      });
+      }
     }
   }
 

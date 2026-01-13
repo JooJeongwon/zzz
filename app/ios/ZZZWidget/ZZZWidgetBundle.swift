@@ -12,7 +12,6 @@ import SwiftUI
 struct ZZZWidgetBundle: WidgetBundle {
     var body: some Widget {
         ZZZWidget()
-        ZZZWidgetControl()
         ZZZWidgetLiveActivity()
     }
 }
