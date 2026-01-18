@@ -8,6 +8,7 @@ import com.zzz.core.domain.user.UserRepository;
 import com.zzz.core.domain.user.UserStatus;
 import com.zzz.core.domain.couple.Couple;
 import com.zzz.core.domain.couple.CoupleRepository;
+import com.zzz.core.domain.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -29,6 +30,7 @@ public class ChatService {
     private final UserRepository userRepository;
     private final AIServiceClient aiServiceClient;
     private final CoupleRepository coupleRepository;
+    private final NotificationService notificationService;
 
     public Page<ChatMessage> getChatHistory(Long userId, Long partnerId, Pageable pageable) {
         return chatRepository.findBySenderIdAndReceiverIdOrSenderIdAndReceiverIdOrderByCreatedAtDesc(
@@ -50,9 +52,14 @@ public class ChatService {
         // 2. Check Receiver Status & Trigger AI
         User receiver = userRepository.findById(receiverId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User sender = userRepository.findById(senderId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
         
+        // Notify Receiver
+        notificationService.sendChatNotification(sender, receiver, content);
+
         if (isUserUnavailable(receiver.getStatus())) {
-            triggerAutoReply(receiver, senderId, content);
+            triggerAutoReply(receiver, sender, content);
         }
 
         return userMessage; // Return original message immediately
@@ -62,11 +69,11 @@ public class ChatService {
         return status == UserStatus.SLEEP || status == UserStatus.STUDY || status == UserStatus.BUSY;
     }
 
-    private void triggerAutoReply(User receiver, Long senderId, String userMessageContent) {
+    private void triggerAutoReply(User receiver, User sender, String userMessageContent) {
         log.info("User {} is {}, generating AI response...", receiver.getId(), receiver.getStatus());
         try {
             AIChatResponse aiResponse = aiServiceClient.generateResponse(AIChatRequest.builder()
-                    .user_id(String.valueOf(senderId)) // The one asking
+                    .user_id(String.valueOf(sender.getId())) // The one asking
                     .partner_id(String.valueOf(receiver.getId())) // The one sleeping (AI Persona)
                     .partner_name(receiver.getNickname()) 
                     .message(userMessageContent)
@@ -75,13 +82,16 @@ public class ChatService {
             if (aiResponse != null && aiResponse.getResponse() != null) {
                 ChatMessage aiMessage = ChatMessage.builder()
                         .senderId(receiver.getId()) // AI replies as the receiver
-                        .receiverId(senderId)
+                        .receiverId(sender.getId())
                         .content(aiResponse.getResponse())
                         .isAiGenerated(true)
                         .messageType("TEXT")
                         .createdAt(LocalDateTime.now())
                         .build();
                 chatRepository.save(aiMessage);
+                
+                // Notify Sender (who is receiving the AI reply)
+                notificationService.sendChatNotification(receiver, sender, aiResponse.getResponse());
             }
 
         } catch (Exception e) {

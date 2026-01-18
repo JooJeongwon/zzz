@@ -5,6 +5,9 @@ import com.zzz.core.api.dto.TokenResponse;
 import com.zzz.core.api.dto.UserLoginRequest;
 import com.zzz.core.api.dto.UserRegisterRequest;
 import com.zzz.core.domain.chat.ChatService;
+import com.zzz.core.domain.couple.Couple;
+import com.zzz.core.domain.couple.CoupleRepository;
+import com.zzz.core.domain.notification.NotificationService;
 import com.zzz.core.global.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +23,8 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserStatusService userStatusService;
     private final ChatService chatService;
+    private final CoupleRepository coupleRepository;
+    private final NotificationService notificationService;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -78,6 +83,9 @@ public class UserService {
         if (oldStatus == UserStatus.SLEEP || oldStatus == UserStatus.STUDY) {
              log.info("User {} woke up (Heartbeat). Triggering recap.", userId);
              chatService.createRecap(userId);
+             
+             // Also notify partner
+             notifyPartnerStatusChange(userId, UserStatus.ONLINE);
         }
     }
 
@@ -103,6 +111,21 @@ public class UserService {
             && newStatus == UserStatus.ONLINE) {
              log.info("User {} woke up (Manual). Triggering recap.", userId);
              chatService.createRecap(userId);
+        }
+
+        // Notify Partner
+        notifyPartnerStatusChange(userId, newStatus);
+    }
+
+    private void notifyPartnerStatusChange(Long userId, UserStatus newStatus) {
+        User user = userRepository.findById(userId).orElseThrow();
+        if (user.getCoupleId() != null) {
+            coupleRepository.findById(user.getCoupleId()).ifPresent(couple -> {
+                Long partnerId = couple.getUserA().getId().equals(userId) ? couple.getUserB().getId() : couple.getUserA().getId();
+                userRepository.findById(partnerId).ifPresent(partner -> {
+                    notificationService.sendStatusChangeNotification(user, partner, newStatus);
+                });
+            });
         }
     }
 

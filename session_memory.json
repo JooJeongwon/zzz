@@ -1,6 +1,6 @@
 {
-    "last_updated": "2026-01-13",
-    "current_phase": "Bug Fixing & Stability",
+    "last_updated": "2026-01-18",
+    "current_phase": "Phase 6: Polish & Beta",
     "project_status": {
         "completed_tasks": [
             "Infra Setup (Docker, MySQL, Redis, Mongo)",
@@ -30,13 +30,16 @@
             "Fixed iOS Build Issues (Widget Extensions, Live Activities)",
             "Fixed Backend Core Startup Failure (Missing jwt.secret)",
             "Fixed Client Infinite Loop on 403 Error (HomeScreen)",
-            "Created Root .gitignore File"
+            "Created Root .gitignore File",
+            "Push Notification Foundation (FCM Setup): Client Dependencies, Service, Backend Token Storage",
+            "Implemented FCM Sending Logic in Backend (Core Service)"
         ],
         "in_progress": "Optimization & Deployment",
         "pending_tasks": [
             "Character Animation Assets",
             "Deploy & Optimization",
-            "Security Audit"
+            "Security Audit",
+            "Client: Push Notification Deep Linking"
         ]
     },
     "technical_decisions": {
@@ -47,5 +50,5 @@
         "db": "MySQL, Redis, MongoDB, Pinecone",
         "llm": "OpenAI (GPT-3.5) + LangChain"
     },
-    "notes_for_ai": "AI Service now supports Mock Mode when API Key is missing. iOS Widget code integrated in 'app/ios/ZZZWidget'. Core Service (8080), AI Service (8000). To run tests: Backend-Core (./gradlew test), Backend-AI (pytest), Client (flutter test). Latest Fix: Resolved 403 Infinite Loop in Client."
+    "notes_for_ai": "AI Service now supports Mock Mode when API Key is missing. iOS Widget code integrated in 'app/ios/ZZZWidget'. Core Service (8080), AI Service (8000). To run tests: Backend-Core (./gradlew test), Backend-AI (pytest), Client (flutter test). Latest Fix: Resolved 403 Infinite Loop in Client. Added FCM Token support to User Entity."
 }

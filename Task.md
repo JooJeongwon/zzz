@@ -8,13 +8,15 @@ A. 토큰 갱신 로직 (Refresh Token Strategy) [Completed]
 
 보완: * [x] 백그라운드 서비스 내에서 401 응답 수신 시, Refresh Token을 사용해 토큰을 갱신하고 재시도하는 로직(Silent Refresh)을 네이티브 레벨(Kotlin)과 플러터 레벨(Dart) 양쪽에 구현해야 합니다.
 
-B. 푸시 알림 연동 (FCM/APNs)
+B. 푸시 알림 연동 (FCM/APNs) [Partially Completed]
 
 문제점: ARCHITECTURE.md에는 NotiServer와 FCM이 명시되어 있으나, 코드상으로는 아직 푸시 발송 로직이 보이지 않습니다. 상대방이 "일어났어요" 상태로 변하거나 AI가 대신 답장을 했을 때, 앱이 꺼져 있다면 사용자는 이를 알 수 없습니다.
 
-보완: * Backend: 특정 이벤트(상태 변경, 채팅 수신) 발생 시 FCM으로 데이터 메시지를 쏘는 로직 추가.
-
-Client: Flutter에서 firebase_messaging을 연동하여 알림 수신 및 클릭 시 해당 화면(채팅방 등)으로 이동하는 딥링크 처리.
+보완: 
+* [x] **Client:** Flutter에서 `firebase_messaging`을 연동하여 권한 요청, 토큰 획득 및 서버 전송 로직(FcmService) 구현.
+* [x] **Backend:** User 엔티티에 FCM Token 필드 추가 및 업데이트 API(`POST /fcm-token`) 구현.
+* [x] **Backend:** 특정 이벤트(상태 변경, 채팅 수신) 발생 시 FCM으로 데이터 메시지를 쏘는 로직 추가 (Firebase Admin SDK 연동).
+* [ ] **Client:** 알림 클릭 시 해당 화면(채팅방 등)으로 이동하는 딥링크 처리.
 
 C. 오프라인 모드 및 큐(Queue) 처리
 
