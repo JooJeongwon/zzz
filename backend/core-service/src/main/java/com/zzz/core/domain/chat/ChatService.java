@@ -98,7 +98,7 @@ public class ChatService {
         Couple couple = coupleRepository.findById(user.getCoupleId())
                 .orElseThrow(() -> new IllegalArgumentException("Couple not found"));
         
-        Long partnerId = couple.getUserAId().equals(userId) ? couple.getUserBId() : couple.getUserAId();
+        Long partnerId = couple.getUserA().getId().equals(userId) ? couple.getUserB().getId() : couple.getUserA().getId();
         
         // Fetch last 30 messages for context
         Pageable limit = PageRequest.of(0, 30);

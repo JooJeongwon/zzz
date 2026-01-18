@@ -21,15 +21,18 @@ public class JwtTokenProvider {
 
     private final Key key;
     private final long accessTokenValidityInMilliseconds;
+    private final long refreshTokenValidityInMilliseconds;
 
     public JwtTokenProvider(@Value("${jwt.secret}") String secret,
-                            @Value("${jwt.expiration:3600000}") long validityInMilliseconds) {
+                            @Value("${jwt.expiration:3600000}") long validityInMilliseconds,
+                            @Value("${jwt.refresh-expiration:604800000}") long refreshValidityInMilliseconds) {
         if (secret == null || secret.length() < 32) {
             throw new IllegalArgumentException("JWT Secret key must be at least 32 characters long and provided via configuration.");
         }
         byte[] keyBytes = Decoders.BASE64.decode(secret);
         this.key = Keys.hmacShaKeyFor(keyBytes);
         this.accessTokenValidityInMilliseconds = validityInMilliseconds;
+        this.refreshTokenValidityInMilliseconds = refreshValidityInMilliseconds;
     }
     
     // For demo simplicity, re-using a strong default key logic if the property is missing or short. 
@@ -38,6 +41,19 @@ public class JwtTokenProvider {
     public String createToken(Long userId, String email) {
         Date now = new Date();
         Date validity = new Date(now.getTime() + accessTokenValidityInMilliseconds);
+
+        return Jwts.builder()
+                .setSubject(email)
+                .claim("userId", userId)
+                .setIssuedAt(now)
+                .setExpiration(validity)
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public String createRefreshToken(Long userId, String email) {
+        Date now = new Date();
+        Date validity = new Date(now.getTime() + refreshTokenValidityInMilliseconds);
 
         return Jwts.builder()
                 .setSubject(email)

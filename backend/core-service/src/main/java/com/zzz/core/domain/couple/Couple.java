@@ -1,5 +1,6 @@
 package com.zzz.core.domain.couple;
 
+import com.zzz.core.domain.user.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -16,17 +17,19 @@ public class Couple {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private Long userAId;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_a_id", nullable = false)
+    private User userA;
 
-    @Column(nullable = false)
-    private Long userBId;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_b_id", nullable = false)
+    private User userB;
 
     private LocalDateTime startedAt;
 
-    public Couple(Long userAId, Long userBId) {
-        this.userAId = userAId;
-        this.userBId = userBId;
+    public Couple(User userA, User userB) {
+        this.userA = userA;
+        this.userB = userB;
         this.startedAt = LocalDateTime.now();
     }
 }

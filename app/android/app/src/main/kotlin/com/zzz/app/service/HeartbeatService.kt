@@ -65,11 +65,29 @@ class HeartbeatService : Service() {
     private fun performHeartbeat(userId: Long) {
         val batteryLevel = getBatteryLevel()
         val isScreenOn = isScreenOn()
-        val authToken = tokenManager.getAuthToken()
+        var authToken = tokenManager.getAuthToken()
 
         Log.d("HeartbeatService", "Processing heartbeat: User=$userId, Bat=$batteryLevel, Screen=$isScreenOn")
         
-        heartbeatClient.sendHeartbeat(authToken, batteryLevel, isScreenOn)
+        var responseCode = heartbeatClient.sendHeartbeat(authToken, batteryLevel, isScreenOn)
+
+        if (responseCode == 401) {
+            Log.d("HeartbeatService", "Token expired (401). Attempting refresh...")
+            val refreshToken = tokenManager.getRefreshToken()
+            if (refreshToken != null) {
+                val newTokens = heartbeatClient.refreshAccessToken(refreshToken)
+                if (newTokens != null) {
+                    Log.d("HeartbeatService", "Token refresh success. Retrying heartbeat.")
+                    tokenManager.saveTokens(newTokens.first, newTokens.second)
+                    authToken = newTokens.first
+                    heartbeatClient.sendHeartbeat(authToken, batteryLevel, isScreenOn)
+                } else {
+                    Log.e("HeartbeatService", "Token refresh failed.")
+                }
+            } else {
+                Log.e("HeartbeatService", "No refresh token available.")
+            }
+        }
     }
 
     private fun getBatteryLevel(): Int {

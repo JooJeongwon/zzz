@@ -48,7 +48,24 @@ public class UserService {
         }
 
         String accessToken = jwtTokenProvider.createToken(user.getId(), user.getEmail());
-        return new TokenResponse(accessToken, user.getId());
+        String refreshToken = jwtTokenProvider.createRefreshToken(user.getId(), user.getEmail());
+        return new TokenResponse(accessToken, refreshToken, user.getId());
+    }
+
+    @Transactional(readOnly = true)
+    public TokenResponse refresh(String refreshToken) {
+        if (!jwtTokenProvider.validateToken(refreshToken)) {
+            throw new IllegalArgumentException("Invalid refresh token");
+        }
+
+        Long userId = jwtTokenProvider.getUserId(refreshToken);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        String newAccessToken = jwtTokenProvider.createToken(user.getId(), user.getEmail());
+        String newRefreshToken = jwtTokenProvider.createRefreshToken(user.getId(), user.getEmail());
+
+        return new TokenResponse(newAccessToken, newRefreshToken, user.getId());
     }
 
     @Transactional

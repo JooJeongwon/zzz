@@ -6,6 +6,7 @@ import com.zzz.core.domain.user.User;
 import com.zzz.core.domain.user.UserRepository;
 import com.zzz.core.domain.user.UserStatusService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +15,7 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CoupleService {
@@ -30,21 +32,26 @@ public class CoupleService {
     /**
      * 상대방 상태 조회
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public PartnerStatusResponse getPartnerStatus(Long userId) {
         User me = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         if (me.getCoupleId() == null) {
-            throw new IllegalStateException("User is not in a couple");
+            return null;
         }
 
         Couple couple = coupleRepository.findById(me.getCoupleId())
-                .orElseThrow(() -> new IllegalStateException("Couple info not found"));
+                .orElse(null);
 
-        Long partnerId = couple.getUserAId().equals(userId) ? couple.getUserBId() : couple.getUserAId();
-        User partner = userRepository.findById(partnerId)
-                .orElseThrow(() -> new IllegalStateException("Partner user not found"));
+        if (couple == null) {
+            log.error("Data Integrity Error: User {} has coupleId {} but Couple entity not found. Self-healing applied.", userId, me.getCoupleId());
+            me.setCoupleId(null);
+            return null;
+        }
+
+        User partner = couple.getUserA().getId().equals(userId) ? couple.getUserB() : couple.getUserA();
+        Long partnerId = partner.getId();
 
         // Redis Metadata (Battery)
         String metaKey = USER_METADATA_KEY_PREFIX + partnerId;
@@ -121,7 +128,7 @@ public class CoupleService {
         }
 
         // Create Couple
-        Couple couple = new Couple(partnerId, userId);
+        Couple couple = new Couple(partner, me);
         couple = coupleRepository.save(couple);
 
         // Update Users

@@ -2,11 +2,11 @@
 
 사용자 경험(UX)과 서비스 안정성을 위해 추가되어야 할 기능들입니다.
 
-A. 토큰 갱신 로직 (Refresh Token Strategy)
+A. 토큰 갱신 로직 (Refresh Token Strategy) [Completed]
 
 문제점: HeartbeatService.kt(Android)는 TokenManager에 저장된 Access Token을 사용하여 하트비트를 전송합니다. 보통 Access Token은 수명이 짧은데(예: 30분), 앱이 백그라운드에 오래 떠 있는 경우 토큰이 만료되면 하트비트 전송이 401 Unauthorized로 실패하고, 사용자는 'Offline'으로 오해받게 됩니다.
 
-보완: * 백그라운드 서비스 내에서 401 응답 수신 시, Refresh Token을 사용해 토큰을 갱신하고 재시도하는 로직(Silent Refresh)을 네이티브 레벨(Kotlin)과 플러터 레벨(Dart) 양쪽에 구현해야 합니다.
+보완: * [x] 백그라운드 서비스 내에서 401 응답 수신 시, Refresh Token을 사용해 토큰을 갱신하고 재시도하는 로직(Silent Refresh)을 네이티브 레벨(Kotlin)과 플러터 레벨(Dart) 양쪽에 구현해야 합니다.
 
 B. 푸시 알림 연동 (FCM/APNs)
 

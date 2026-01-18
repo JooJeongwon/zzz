@@ -121,23 +121,20 @@ class _HomeScreenState extends State<HomeScreen> {
       String message;
 
       try {
-
         final userId = await ApiService.getUserId();
-
-        if (userId == null) {
-
-          message = "Error: User ID not found.";
-
+        final token = await ApiService.getToken();
+        
+        if (userId == null || token == null) {
+          message = "Error: User ID or Token not found.";
         }
-
         else {
-
-          final String result = await platform.invokeMethod('startHeartbeat', {'userId': userId});
-
+          final String result = await platform.invokeMethod('startHeartbeat', {
+            'userId': userId,
+            'accessToken': token,
+            'baseUrl': ApiService.baseUrl,
+          });
           message = 'Success: $result';
-
         }
-
       }
 
       on PlatformException catch (e) {

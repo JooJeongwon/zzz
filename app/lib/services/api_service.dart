@@ -60,10 +60,14 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final accessToken = data['accessToken'];
+        final refreshToken = data['refreshToken'];
         final userId = data['userId'];
 
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('accessToken', accessToken);
+        if (refreshToken != null) {
+          await prefs.setString('refreshToken', refreshToken);
+        }
         if (userId != null) {
           await prefs.setInt('userId', userId);
         }
@@ -79,6 +83,11 @@ class ApiService {
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('accessToken');
+  }
+
+  static Future<String?> getRefreshToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('refreshToken');
   }
 
   static Future<int?> getUserId() async {

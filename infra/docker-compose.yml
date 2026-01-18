@@ -113,6 +113,7 @@ services:
       - "8000:8000"
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-changeme}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-changeme}
       - PINECONE_API_KEY=${PINECONE_API_KEY:-changeme}
       - REDIS_HOST=redis
       - MONGO_HOST=mongo

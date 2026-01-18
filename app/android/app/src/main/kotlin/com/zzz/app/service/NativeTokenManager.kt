@@ -10,7 +10,8 @@ class NativeTokenManager(context: Context) {
     companion object {
         // Flutter shared_preferences 패키지는 키 앞에 "flutter." 접두사를 붙여서 저장합니다.
         private const val KEY_USER_ID = "flutter.user_id"
-        private const val KEY_AUTH_TOKEN = "flutter.auth_token"
+        private const val KEY_AUTH_TOKEN = "flutter.accessToken"
+        private const val KEY_REFRESH_TOKEN = "flutter.refreshToken"
     }
 
     fun getUserId(): Long {
@@ -29,5 +30,18 @@ class NativeTokenManager(context: Context) {
 
     fun getAuthToken(): String? {
         return prefs.getString(KEY_AUTH_TOKEN, null)
+    }
+
+    fun getRefreshToken(): String? {
+        return prefs.getString(KEY_REFRESH_TOKEN, null)
+    }
+
+    fun saveTokens(accessToken: String, refreshToken: String?) {
+        val editor = prefs.edit()
+        editor.putString(KEY_AUTH_TOKEN, accessToken)
+        if (refreshToken != null) {
+            editor.putString(KEY_REFRESH_TOKEN, refreshToken)
+        }
+        editor.apply()
     }
 }

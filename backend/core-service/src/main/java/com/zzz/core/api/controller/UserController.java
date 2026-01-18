@@ -34,6 +34,11 @@ public class UserController {
         return ResponseEntity.ok(userService.login(request));
     }
 
+    @PostMapping("/refresh")
+    public ResponseEntity<TokenResponse> refresh(@RequestBody com.zzz.core.api.dto.RefreshTokenRequest request) {
+        return ResponseEntity.ok(userService.refresh(request.getRefreshToken()));
+    }
+
     @PostMapping("/heartbeat")
     public ResponseEntity<Void> heartbeat(
             org.springframework.security.core.Authentication authentication,

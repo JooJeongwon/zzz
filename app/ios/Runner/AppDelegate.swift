@@ -21,11 +21,63 @@ import WidgetKit
             guard let self = self else { return }
             
             if call.method == "startHeartbeat" {
-                // iOS doesn't have a direct equivalent to Android Foreground Service for this.
-                // We acknowledge the call to prevent MissingPluginException.
-                // In a real app, this might trigger Background Tasks or Location updates.
-                print("startHeartbeat called on iOS")
-                result("iOS Service Started (Mock)")
+                guard let args = call.arguments as? [String: Any],
+                      let baseUrl = args["baseUrl"] as? String,
+                      let accessToken = args["accessToken"] as? String else {
+                    result(FlutterError(code: "INVALID_ARGS", message: "Missing baseUrl or accessToken", details: nil))
+                    return
+                }
+
+                UIDevice.current.isBatteryMonitoringEnabled = true
+                let rawBattery = UIDevice.current.batteryLevel
+                let batteryLevel = rawBattery < 0 ? 100 : Int(rawBattery * 100)
+                
+                // Since the user is interacting with the app, the screen is ON.
+                let isScreenOn = true
+
+                guard let url = URL(string: "\(baseUrl)/users/heartbeat") else {
+                    result(FlutterError(code: "INVALID_URL", message: "Invalid URL", details: nil))
+                    return
+                }
+
+                var request = URLRequest(url: url)
+                request.httpMethod = "POST"
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+
+                let body: [String: Any] = [
+                    "batteryLevel": batteryLevel,
+                    "isScreenOn": isScreenOn
+                ]
+
+                do {
+                    request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
+                } catch {
+                    result(FlutterError(code: "JSON_ERROR", message: "Failed to encode body", details: nil))
+                    return
+                }
+
+                print("Sending Heartbeat to \(url.absoluteString) with battery: \(batteryLevel)%")
+
+                let task = URLSession.shared.dataTask(with: request) { data, response, error in
+                    if let error = error {
+                        print("Heartbeat Error: \(error.localizedDescription)")
+                        result(FlutterError(code: "NETWORK_ERROR", message: error.localizedDescription, details: nil))
+                        return
+                    }
+
+                    if let httpResponse = response as? HTTPURLResponse {
+                        if (200...299).contains(httpResponse.statusCode) {
+                            result("Heartbeat Sent (Battery: \(batteryLevel)%)")
+                        } else {
+                            print("Heartbeat Failed: Status \(httpResponse.statusCode)")
+                            result(FlutterError(code: "SERVER_ERROR", message: "Status \(httpResponse.statusCode)", details: nil))
+                        }
+                    } else {
+                        result(FlutterError(code: "UNKNOWN_ERROR", message: "No response", details: nil))
+                    }
+                }
+                task.resume()
                 return
             }
 
