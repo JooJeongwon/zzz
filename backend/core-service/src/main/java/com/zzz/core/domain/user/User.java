@@ -26,6 +26,8 @@ public class User {
     @Column(nullable = false)
     private String password; // 실제로는 Encrypted
 
+    private String fcmToken;
+
     @Enumerated(EnumType.STRING)
     private UserStatus status;
 
@@ -40,6 +42,10 @@ public class User {
         this.password = password;
         this.status = UserStatus.ONLINE;
         this.lastActiveAt = LocalDateTime.now();
+    }
+
+    public void updateFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
     }
 
     public UserStatus updateStatus(UserStatus status) {

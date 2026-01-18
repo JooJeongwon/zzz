@@ -225,4 +225,25 @@ class ApiService {
       return null;
     }
   }
+
+  // Update FCM Token
+  static Future<bool> updateFcmToken(String token) async {
+    try {
+      final url = Uri.parse('$baseUrl/users/fcm-token');
+      final headers = await _getAuthHeaders();
+      final body = {
+        "fcmToken": token,
+      };
+
+      final response = await http.post(
+        url,
+        headers: headers,
+        body: jsonEncode(body),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint("UpdateFcmToken Error: $e");
+      return false;
+    }
+  }
 }

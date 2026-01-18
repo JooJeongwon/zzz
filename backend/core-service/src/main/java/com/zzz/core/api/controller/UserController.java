@@ -56,4 +56,13 @@ public class UserController {
         userService.updateStatus(userId, UserStatus.valueOf(request.getStatus()));
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/fcm-token")
+    public ResponseEntity<Void> updateFcmToken(
+            org.springframework.security.core.Authentication authentication,
+            @RequestBody com.zzz.core.api.dto.FcmTokenUpdateRequest request) {
+        Long userId = Long.parseLong(authentication.getName());
+        userService.updateFcmToken(userId, request.getFcmToken());
+        return ResponseEntity.ok().build();
+    }
 }

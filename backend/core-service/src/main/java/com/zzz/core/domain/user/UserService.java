@@ -105,4 +105,11 @@ public class UserService {
              chatService.createRecap(userId);
         }
     }
+
+    @Transactional
+    public void updateFcmToken(Long userId, String fcmToken) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        user.updateFcmToken(fcmToken);
+    }
 }
