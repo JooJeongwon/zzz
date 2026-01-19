@@ -13,7 +13,7 @@ class HeartbeatClient {
         private const val API_BASE_URL = "http://10.0.2.2:8080"
     }
 
-    fun sendHeartbeat(authToken: String?, batteryLevel: Int, isScreenOn: Boolean): Int {
+    fun sendHeartbeat(authToken: String?, batteryLevel: Int, isScreenOn: Boolean, timestamp: Long = System.currentTimeMillis()): Int {
         val url = URL("$API_BASE_URL/api/v1/users/heartbeat")
         
         return try {
@@ -28,6 +28,7 @@ class HeartbeatClient {
                 val jsonBody = JSONObject().apply {
                     put("batteryLevel", batteryLevel)
                     put("isScreenOn", isScreenOn)
+                    put("timestamp", timestamp)
                 }
 
                 OutputStreamWriter(outputStream).use { writer ->
@@ -44,6 +45,49 @@ class HeartbeatClient {
             }
         } catch (e: Exception) {
             Log.e("HeartbeatClient", "Network error", e)
+            -1
+        }
+    }
+
+    fun sendHeartbeatBatch(authToken: String?, heartbeats: List<Map<String, Any>>): Int {
+        val url = URL("$API_BASE_URL/api/v1/users/heartbeat/batch")
+        
+        return try {
+            with(url.openConnection() as HttpURLConnection) {
+                requestMethod = "POST"
+                doOutput = true
+                setRequestProperty("Content-Type", "application/json")
+                if (authToken != null) {
+                    setRequestProperty("Authorization", "Bearer $authToken")
+                }
+
+                val jsonHeartbeats = org.json.JSONArray()
+                heartbeats.forEach { 
+                    jsonHeartbeats.put(JSONObject().apply {
+                        put("timestamp", it["timestamp"])
+                        put("batteryLevel", it["batteryLevel"])
+                        put("isScreenOn", it["isScreenOn"])
+                    })
+                }
+
+                val jsonBody = JSONObject().apply {
+                    put("heartbeats", jsonHeartbeats)
+                }
+
+                OutputStreamWriter(outputStream).use { writer ->
+                    writer.write(jsonBody.toString())
+                }
+
+                val code = responseCode
+                if (code == 200) {
+                    Log.d("HeartbeatClient", "Heartbeat Batch success")
+                } else {
+                    Log.e("HeartbeatClient", "Heartbeat Batch failed: $code")
+                }
+                code
+            }
+        } catch (e: Exception) {
+            Log.e("HeartbeatClient", "Network error in Batch", e)
             -1
         }
     }

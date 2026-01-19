@@ -30,6 +30,9 @@ class CoupleIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @org.springframework.boot.test.mock.mockito.MockBean
+    private com.google.firebase.messaging.FirebaseMessaging firebaseMessaging;
+
     @Test
     @DisplayName("커플 연결 시나리오: User A 초대 -> User B 연결 -> 상태 조회")
     void coupleConnectionScenario() throws Exception {

@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.widget.RemoteViews
 import es.antonborri.home_widget.HomeWidgetPlugin
+import com.joo.zzz.app.R
 
 class StatusWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(

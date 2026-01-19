@@ -7,7 +7,6 @@ import com.zzz.core.domain.user.UserRepository;
 import com.zzz.core.domain.user.UserStatusService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,10 +22,8 @@ public class CoupleService {
     private final CoupleRepository coupleRepository;
     private final UserRepository userRepository;
     private final UserStatusService userStatusService;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final CoupleInviteRepository coupleInviteRepository;
 
-    private static final String INVITE_CODE_PREFIX = "couple:invite:";
-    private static final String USER_METADATA_KEY_PREFIX = "user:metadata:";
     private static final long INVITE_CODE_TTL_HOURS = 24;
 
     /**
@@ -54,8 +51,7 @@ public class CoupleService {
         Long partnerId = partner.getId();
 
         // Redis Metadata (Battery)
-        String metaKey = USER_METADATA_KEY_PREFIX + partnerId;
-        Map<Object, Object> metadata = redisTemplate.opsForHash().entries(metaKey);
+        Map<Object, Object> metadata = userStatusService.getUserMetadata(partnerId);
         
         Integer battery = null;
         if (metadata.containsKey("battery")) {
@@ -92,10 +88,9 @@ public class CoupleService {
         }
 
         String code = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
-        String key = INVITE_CODE_PREFIX + code;
         
         // Value에 UserId 저장
-        redisTemplate.opsForValue().set(key, userId.toString(), Duration.ofHours(INVITE_CODE_TTL_HOURS));
+        coupleInviteRepository.saveInviteCode(code, userId, Duration.ofHours(INVITE_CODE_TTL_HOURS));
 
         return new CoupleInviteResponse(code, Duration.ofHours(INVITE_CODE_TTL_HOURS).toSeconds());
     }
@@ -110,14 +105,9 @@ public class CoupleService {
             throw new IllegalStateException("User is already in a couple");
         }
 
-        String key = INVITE_CODE_PREFIX + code;
-        String partnerIdStr = (String) redisTemplate.opsForValue().get(key);
+        Long partnerId = coupleInviteRepository.getUserIdByCode(code)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired invite code"));
 
-        if (partnerIdStr == null) {
-            throw new IllegalArgumentException("Invalid or expired invite code");
-        }
-
-        Long partnerId = Long.parseLong(partnerIdStr);
         if (partnerId.equals(userId)) {
             throw new IllegalArgumentException("Cannot couple with yourself");
         }
@@ -136,7 +126,7 @@ public class CoupleService {
         partner.setCoupleId(couple.getId());
 
         // Remove code
-        redisTemplate.delete(key);
+        coupleInviteRepository.deleteInviteCode(code);
 
         return couple.getId();
     }

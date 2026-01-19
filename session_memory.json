@@ -1,54 +1,18 @@
 {
-    "last_updated": "2026-01-18",
-    "current_phase": "Phase 6: Polish & Beta",
-    "project_status": {
-        "completed_tasks": [
-            "Infra Setup (Docker, MySQL, Redis, Mongo)",
-            "Backend Core Setup (Spring Boot)",
-            "User & Couple Domain Implementation",
-            "Heartbeat Logic Implementation",
-            "Android Foreground Service Setup",
-            "AI Service Setup (FastAPI)",
-            "Vector DB Integration (Pinecone)",
-            "RAG Pipeline Implementation",
-            "LLM (OpenAI) Integration",
-            "Core Service <-> AI Service Communication",
-            "Backend Chat History API",
-            "Flutter Login/Signup UI & API Service",
-            "Flutter Main Screen (Status Sharing) & Couple Connection",
-            "Chat UI Implementation (Flutter)",
-            "Flutter Status Change Widget (Dialog)",
-            "Backend Chat Recap Logic (Sleep -> Online Trigger)",
-            "iOS Live Activity MethodChannel Bridge & Request Logic",
-            "Client (Flutter): AI Recap UI",
-            "Client (Native): iOS Home Screen Widget Code & Data Sharing",
-            "Fixed iOS Widget Compile Errors (ConfigurationAppIntent)",
-            "Verified Project Execution Environment (Docker, Spring Boot)",
-            "Verified All Testing Areas (Core, AI, Client)",
-            "Fixed AI Service Dependencies (Pinecone v3 Migration)",
-            "Implemented AI Service Mock Mode (Works without API Key)",
-            "Fixed iOS Build Issues (Widget Extensions, Live Activities)",
-            "Fixed Backend Core Startup Failure (Missing jwt.secret)",
-            "Fixed Client Infinite Loop on 403 Error (HomeScreen)",
-            "Created Root .gitignore File",
-            "Push Notification Foundation (FCM Setup): Client Dependencies, Service, Backend Token Storage",
-            "Implemented FCM Sending Logic in Backend (Core Service)"
-        ],
-        "in_progress": "Optimization & Deployment",
-        "pending_tasks": [
-            "Character Animation Assets",
-            "Deploy & Optimization",
-            "Security Audit",
-            "Client: Push Notification Deep Linking"
-        ]
-    },
-    "technical_decisions": {
-        "architecture": "MSA",
-        "backend_core": "Spring Boot (Java)",
-        "backend_ai": "FastAPI (Python)",
-        "client": "Flutter (Android/iOS)",
-        "db": "MySQL, Redis, MongoDB, Pinecone",
-        "llm": "OpenAI (GPT-3.5) + LangChain"
-    },
-    "notes_for_ai": "AI Service now supports Mock Mode when API Key is missing. iOS Widget code integrated in 'app/ios/ZZZWidget'. Core Service (8080), AI Service (8000). To run tests: Backend-Core (./gradlew test), Backend-AI (pytest), Client (flutter test). Latest Fix: Resolved 403 Infinite Loop in Client. Added FCM Token support to User Entity."
+  "last_task": "Refactor AI Service to Lazy Loading",
+  "technical_details": {
+    "module": "backend/ai-service",
+    "class": "GeminiLLMProvider",
+    "changes": [
+      "Changed __init__ to store api_key only",
+      "Implemented @property for chat_model and embeddings",
+      "Deferred ChatGoogleGenerativeAI and GoogleGenerativeAIEmbeddings initialization to first access",
+      "Updated Task.md"
+    ]
+  },
+  "next_steps": [
+    "Security: API audit and encryption",
+    "Optimization: Battery optimization (Android)",
+    "Deploy: AWS & CI/CD"
+  ]
 }

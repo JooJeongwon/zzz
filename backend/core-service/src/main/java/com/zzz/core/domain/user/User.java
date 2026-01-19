@@ -26,6 +26,8 @@ public class User {
     @Column(nullable = false)
     private String password; // 실제로는 Encrypted
 
+    private String timezone;
+
     private String fcmToken;
 
     @Enumerated(EnumType.STRING)
@@ -42,6 +44,11 @@ public class User {
         this.password = password;
         this.status = UserStatus.ONLINE;
         this.lastActiveAt = LocalDateTime.now();
+        this.timezone = "Asia/Seoul";
+    }
+
+    public void updateTimezone(String timezone) {
+        this.timezone = timezone;
     }
 
     public void updateFcmToken(String fcmToken) {
@@ -56,8 +63,12 @@ public class User {
     }
 
     public UserStatus updateHeartbeat() {
+        return updateHeartbeat(LocalDateTime.now());
+    }
+
+    public UserStatus updateHeartbeat(LocalDateTime timestamp) {
         UserStatus oldStatus = this.status;
-        this.lastActiveAt = LocalDateTime.now();
+        this.lastActiveAt = timestamp;
         // Assuming ONLINE if heartbeat is received, though logic might be more complex later
         if (this.status == UserStatus.UNKNOWN || this.status == UserStatus.SLEEP) {
              this.status = UserStatus.ONLINE;

@@ -43,7 +43,7 @@ AI 페르소나 기능을 위한 별도 서비스를 구축합니다.
 - [x] **Client (Native):** Android Home Screen Widget 구현 (Kotlin).
 - [x] **Client (Native):** iOS Home Screen Widget 구현 (Swift/SwiftUI).
 
-## ✨ Phase 6: Polish & Beta (안정화 및 배포) - [Current Status: 70%]
+## ✨ Phase 6: Polish & Beta (안정화 및 배포) - [Current Status: 80%]
 - [x] **Test:** 백엔드 테스트 환경 구축 (H2 DB, Test Config) 및 Context Load 검증.
 - [x] **Test:** 통합 테스트 및 시나리오 테스트 (User Lifecycle, Couple Connection 검증 완료).
 - [x] **Test:** AI 서비스 테스트 환경 구축 (Mock Mode 구현으로 API Key 없이 동작 검증).
@@ -51,7 +51,11 @@ AI 페르소나 기능을 위한 별도 서비스를 구축합니다.
 - [x] **Client (Native):** iOS Heartbeat 전송 로직 실제 구현 (Mock 제거).
 - [x] **Security:** Refresh Token Strategy 구현 (Backend & Android Native).
 - [x] **Refactor:** 하드코딩 제거 및 환경 변수 분리 (Flutter .env / Backend application.yml).
+- [x] **Refactor:** Backend Core (UserService 분리) 및 AI Service (LLMProvider 전략 패턴) 구조 개선.
+- [x] **Refactor:** Backend Core DIP 적용 (Redis 의존성 분리 및 Repository 패턴 도입).
+- [x] **Arch:** Event-Driven Architecture 기반 구축 (RabbitMQ 도입, Notification 및 AI Service 연동).
+- [x] **Feature:** Android Offline Mode (Room DB & Batch Upload).
+- [x] **Feature:** Push Notification (FCM) - Client 딥링크 처리 예정 (Backend 발송 로직 완료).
 - [ ] **Security:** API 보안 감사 및 데이터 암호화 적용.
 - [ ] **Optimization:** 배터리 소모 최적화 (Android).
 - [ ] **Deploy:** AWS 배포 및 CI/CD 파이프라인 구축.
-- [ ] **Feature:** Push Notification (FCM) - Client 딥링크 처리 예정 (Backend 발송 로직 완료).

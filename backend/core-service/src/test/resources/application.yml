@@ -15,3 +15,6 @@ ai-service:
 jwt:
   secret: thisisatestsecretkeyfortestingpurposesonly1234567890
   expiration-time: 3600000
+
+fcm:
+  config-path: firebase-service-account.json

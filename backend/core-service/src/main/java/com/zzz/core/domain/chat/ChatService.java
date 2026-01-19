@@ -1,25 +1,27 @@
 package com.zzz.core.domain.chat;
 
-import com.zzz.core.domain.chat.client.AIChatRequest;
-import com.zzz.core.domain.chat.client.AIChatResponse;
-import com.zzz.core.domain.chat.client.AIServiceClient;
+import com.zzz.core.domain.ai.event.AIEventPublisher;
+import com.zzz.core.domain.ai.event.AIRequestEvent;
 import com.zzz.core.domain.user.User;
 import com.zzz.core.domain.user.UserRepository;
 import com.zzz.core.domain.user.UserStatus;
 import com.zzz.core.domain.couple.Couple;
 import com.zzz.core.domain.couple.CoupleRepository;
-import com.zzz.core.domain.notification.NotificationService;
+import com.zzz.core.domain.notification.event.NotificationEvent;
+import com.zzz.core.domain.notification.event.NotificationEventPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -28,9 +30,9 @@ public class ChatService {
 
     private final ChatRepository chatRepository;
     private final UserRepository userRepository;
-    private final AIServiceClient aiServiceClient;
+    private final AIEventPublisher aiEventPublisher;
     private final CoupleRepository coupleRepository;
-    private final NotificationService notificationService;
+    private final NotificationEventPublisher notificationEventPublisher;
 
     public Page<ChatMessage> getChatHistory(Long userId, Long partnerId, Pageable pageable) {
         return chatRepository.findBySenderIdAndReceiverIdOrSenderIdAndReceiverIdOrderByCreatedAtDesc(
@@ -56,7 +58,7 @@ public class ChatService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         
         // Notify Receiver
-        notificationService.sendChatNotification(sender, receiver, content);
+        publishChatNotification(sender.getId(), receiver.getId(), content);
 
         if (isUserUnavailable(receiver.getStatus())) {
             triggerAutoReply(receiver, sender, content);
@@ -70,35 +72,25 @@ public class ChatService {
     }
 
     private void triggerAutoReply(User receiver, User sender, String userMessageContent) {
-        log.info("User {} is {}, generating AI response...", receiver.getId(), receiver.getStatus());
+        log.info("User {} is {}, publishing AI Chat request...", receiver.getId(), receiver.getStatus());
         try {
-            AIChatResponse aiResponse = aiServiceClient.generateResponse(AIChatRequest.builder()
-                    .user_id(String.valueOf(sender.getId())) // The one asking
-                    .partner_id(String.valueOf(receiver.getId())) // The one sleeping (AI Persona)
-                    .partner_name(receiver.getNickname()) 
-                    .message(userMessageContent)
-                    .build());
-
-            if (aiResponse != null && aiResponse.getResponse() != null) {
-                ChatMessage aiMessage = ChatMessage.builder()
-                        .senderId(receiver.getId()) // AI replies as the receiver
-                        .receiverId(sender.getId())
-                        .content(aiResponse.getResponse())
-                        .isAiGenerated(true)
-                        .messageType("TEXT")
-                        .createdAt(LocalDateTime.now())
-                        .build();
-                chatRepository.save(aiMessage);
-                
-                // Notify Sender (who is receiving the AI reply)
-                notificationService.sendChatNotification(receiver, sender, aiResponse.getResponse());
-            }
+            AIRequestEvent event = AIRequestEvent.builder()
+                    .requestId(UUID.randomUUID().toString())
+                    .userId(String.valueOf(sender.getId())) // The one asking
+                    .partnerId(String.valueOf(receiver.getId())) // The one sleeping (AI Persona)
+                    .partnerName(receiver.getNickname())
+                    .content(userMessageContent)
+                    .type("CHAT")
+                    .build();
+            
+            aiEventPublisher.publishChatRequest(event);
 
         } catch (Exception e) {
-            log.error("Failed to generate AI response for User {}: {}", receiver.getId(), e.getMessage());
+            log.error("Failed to publish AI Chat request for User {}: {}", receiver.getId(), e.getMessage());
         }
     }
 
+    @Async
     public void createRecap(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
@@ -129,27 +121,30 @@ public class ChatService {
         }
 
         try {
-             AIChatResponse aiResponse = aiServiceClient.generateRecap(AIChatRequest.builder()
-                 .user_id(String.valueOf(userId))
-                 .partner_id(String.valueOf(partnerId))
-                 .partner_name("Partner") // Not strictly needed for recap but required by DTO
-                 .message(conversation.toString())
-                 .build());
-                 
-             if (aiResponse.getResponse() != null && !aiResponse.getResponse().isEmpty()) {
-                 ChatMessage recapMsg = ChatMessage.builder()
-                     .senderId(partnerId) // Recap appears as if from Partner (or AI Agent)
-                     .receiverId(userId)
-                     .content(aiResponse.getResponse())
-                     .isAiGenerated(true)
-                     .messageType("RECAP")
-                     .createdAt(LocalDateTime.now())
-                     .build();
-                 chatRepository.save(recapMsg);
-             }
+            AIRequestEvent event = AIRequestEvent.builder()
+                    .requestId(UUID.randomUUID().toString())
+                    .userId(String.valueOf(userId))
+                    .partnerId(String.valueOf(partnerId))
+                    .partnerName("Partner")
+                    .content(conversation.toString())
+                    .type("RECAP")
+                    .build();
+
+            aiEventPublisher.publishRecapRequest(event);
              
         } catch (Exception e) {
-            log.error("Recap failed", e);
+            log.error("Failed to publish AI Recap request", e);
         }
+    }
+
+    private void publishChatNotification(Long senderId, Long receiverId, String content) {
+        NotificationEvent event = NotificationEvent.builder()
+                .type("CHAT")
+                .senderId(senderId)
+                .receiverId(receiverId)
+                .content(content)
+                .timestamp(System.currentTimeMillis())
+                .build();
+        notificationEventPublisher.publish(event);
     }
 }

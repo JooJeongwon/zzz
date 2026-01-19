@@ -10,9 +10,9 @@ A. 데이터 불일치 해결 (Redis-DB Sync)
 
 작업:
 
-[ ] UserService.updateStatus 내에 Redis 캐시(UserStatus)를 즉시 갱신하는 로직 추가.
+[x] UserService.updateStatus 내에 Redis 캐시(UserStatus)를 즉시 갱신하는 로직 추가.
 
-[ ] 상태 변경 시 lastActiveAt 시간도 Redis에 함께 동기화.
+[x] 상태 변경 시 lastActiveAt 시간도 Redis에 함께 동기화.
 
 B. Android 백그라운드 서비스 안정성 강화
 
@@ -20,9 +20,9 @@ B. Android 백그라운드 서비스 안정성 강화
 
 작업:
 
-[ ] userId가 유효하지 않을 경우 서비스 종료 대신 일정 시간 후 재시도(Backoff) 하도록 로직 변경.
+[x] userId가 유효하지 않을 경우 서비스 종료 대신 일정 시간 후 재시도(Backoff) 하도록 로직 변경.
 
-[ ] START_STICKY 외에 START_REDELIVER_INTENT 등을 검토하여 프로세스 재시작 시 안정성 확보.
+[x] START_STICKY 외에 START_REDELIVER_INTENT 등을 검토하여 프로세스 재시작 시 안정성 확보.
 
 C. Core-AI 동기 호출 문제 해결 (성능 이슈)
 
@@ -30,7 +30,7 @@ C. Core-AI 동기 호출 문제 해결 (성능 이슈)
 
 작업:
 
-[ ] createRecap 호출을 @Async를 사용하여 비동기로 전환하거나, 내부적으로 별도 스레드에서 실행되도록 수정.
+[x] createRecap 호출을 @Async를 사용하여 비동기로 전환하거나, 내부적으로 별도 스레드에서 실행되도록 수정.
 
 2. 🚀 기능 고도화 (Functional Enhancements)
 사용자 경험(UX)을 향상시키기 위한 미구현 기능들입니다.
@@ -41,9 +41,11 @@ A. 오프라인 모드 및 큐(Queue) 처리 (Native)
 
 작업:
 
-[ ] Android/iOS: 전송 실패한 Heartbeat/상태 데이터를 로컬 DB(Room/CoreData) 또는 메모리 큐에 저장.
+[x] Android: 전송 실패한 Heartbeat/상태 데이터를 로컬 DB(Room)에 저장.
 
-[ ] 네트워크 연결 복구 시 저장된 데이터를 일괄 전송(Batch Upload)하는 로직 구현.
+[x] iOS: 전송 실패한 Heartbeat/상태 데이터를 로컬 DB(CoreData)에 저장.
+
+[x] 네트워크 연결 복구 시 저장된 데이터를 일괄 전송(Batch Upload)하는 로직 구현 (Backend, Android & iOS 완료).
 
 B. 복합 상태 판별 로직 구현 (Scheduler)
 
@@ -51,13 +53,13 @@ B. 복합 상태 판별 로직 구현 (Scheduler)
 
 작업:
 
-[ ] UserStatusScheduler 로직 고도화:
+[x] UserStatusScheduler 로직 고도화:
 
 수면: (심야 시간대) AND (Heartbeat 끊김 OR 장시간 움직임 없음) AND (배터리 충전 중).
 
 방전: (Heartbeat 끊김) AND (마지막 배터리 잔량 < 5%).
 
-[ ] Timezone을 고려하여 사용자별 현지 시간 기준으로 로직 적용.
+[x] Timezone을 고려하여 사용자별 현지 시간 기준으로 로직 적용.
 
 C. 푸시 알림 딥링크 (Deep Linking)
 
@@ -65,9 +67,9 @@ C. 푸시 알림 딥링크 (Deep Linking)
 
 작업:
 
-[ ] Flutter: firebase_messaging의 onMessageOpenedApp 콜백 구현.
+[x] Flutter: firebase_messaging의 onMessageOpenedApp 콜백 구현.
 
-[ ] 알림 타입(채팅, 상태 변화)에 따라 채팅방(ChatScreen) 또는 메인 화면으로 라우팅 처리.
+[x] 알림 타입(채팅, 상태 변화)에 따라 채팅방(ChatScreen) 또는 메인 화면으로 라우팅 처리.
 
 3. 🛠️ 구조적 리팩토링 (Structural Refactoring)
 코드 품질(SOLID 원칙)과 유지보수성을 위한 개선 사항입니다.
@@ -78,11 +80,11 @@ A. UserService 책임 분리 (SRP 적용)
 
 작업:
 
-[ ] AuthService: 회원가입, 로그인, 토큰 재발급 로직 분리.
+[x] AuthService: 회원가입, 로그인, 토큰 재발급 로직 분리.
 
-[ ] UserStatusService: 상태 변경, Heartbeat 처리, Redis 동기화 로직 전담.
+[x] UserStatusService: 상태 변경, Heartbeat 처리, Redis 동기화 로직 전담. (Implemented via UserLifecycleFacade & separate UserStatusService logic)
 
-[ ] UserLifecycleFacade: 여러 서비스(User, Chat, Couple)를 조율하는 상위 레이어 생성.
+[x] UserLifecycleFacade: 여러 서비스(User, Chat, Couple)를 조율하는 상위 레이어 생성.
 
 B. AI Service 전략 패턴 도입 (OCP 적용)
 
@@ -90,13 +92,13 @@ B. AI Service 전략 패턴 도입 (OCP 적용)
 
 작업:
 
-[ ] LLMProvider 추상 클래스(Interface) 정의.
+[x] LLMProvider 추상 클래스(Interface) 정의.
 
-[ ] GeminiLLMProvider와 MockLLMProvider 구현체 분리.
+[x] GeminiLLMProvider와 MockLLMProvider 구현체 분리.
 
-[ ] config.py 설정에 따라 의존성 주입(Dependency Injection) 방식으로 변경.
+[x] config.py 설정에 따라 의존성 주입(Dependency Injection) 방식으로 변경.
 
-[ ] 생성자에서의 외부 API 호출(블로킹 위험)을 Lazy Loading 방식으로 변경.
+[x] 생성자에서의 외부 API 호출(블로킹 위험)을 Lazy Loading 방식으로 변경.
 
 C. 인프라 코드와 도메인 로직 분리 (DIP 적용)
 
@@ -104,26 +106,28 @@ C. 인프라 코드와 도메인 로직 분리 (DIP 적용)
 
 작업:
 
-[ ] UserStatusRepository 인터페이스 정의.
+[x] UserStatusRepository 인터페이스 정의.
 
-[ ] RedisUserStatusRepository 구현체 작성 및 RedisTemplate 로직 이동.
+[x] RedisUserStatusRepository 구현체 작성 및 RedisTemplate 로직 이동.
 
-[ ] Service 계층에서는 Repository 인터페이스만 의존하도록 리팩토링.
+[x] Service 계층에서는 Repository 인터페이스만 의존하도록 리팩토링.
 
 4. 🏗️ 아키텍처 개선 (Architecture Evolution)
 장기적인 확장성을 위한 아키텍처 변경 과제입니다.
 
 A. 이벤트 기반(Event-Driven) 통신 도입
 
-현황: Core -> AI 서비스 간 HTTP 동기 호출 사용 중.
+현황: Core -> AI 서비스 간 HTTP 동기 호출 사용 중. Notification은 RabbitMQ로 분리됨.
 
 작업:
 
-[ ] RabbitMQ/Kafka 도입.
+[x] RabbitMQ 도입 (Infrastructure & Configuration).
 
-[ ] Core: UserWokeUpEvent, ChatMessageReceivedEvent 발행(Publish) 후 즉시 응답.
+[x] Core: NotificationEvent 발행(Publish) 및 구독(Subscribe) 구조 구현.
 
-[ ] AI/Noti: 메시지 큐를 구독(Subscribe)하여 비동기로 작업 처리 후 결과 콜백.
+[x] Core: AIRequestEvent (Chat/Recap) 발행(Publish) 및 AIResponseEvent 구독(Subscribe) 구현.
+
+[x] AI: 메시지 큐를 구독(Subscribe)하여 비동기로 작업 처리 후 결과 발행(Publish).
 
 ✅ 완료된 작업 (Completed)
 [x] Token Refresh Strategy: Android Native 및 Flutter 레벨에서 401 발생 시 토큰 갱신 로직 구현 (Silent Refresh). [Task 1-A]
@@ -133,3 +137,5 @@ A. 이벤트 기반(Event-Driven) 통신 도입
 [x] FCM Basic Setup: Flutter 클라이언트 연동 및 Backend 토큰 저장 API 구현. [Task 1-B Partial]
 
 [x] Android Foreground Service: 백그라운드 Heartbeat 전송을 위한 기본 서비스 구현.
+
+[x] Event-Driven Architecture (AI): RabbitMQ를 통한 Core-AI 비동기 통신 (Publish/Subscribe) 구현 완료. [Task 4-A]

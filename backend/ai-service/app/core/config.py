@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     # Vector DB (Pinecone)
     PINECONE_API_KEY: str = "changeme"
     PINECONE_ENV: str = "gcp-starter"
+
+    # RabbitMQ
+    RABBITMQ_URL: str = "amqp://guest:guest@localhost:5672/"
     
     class Config:
         case_sensitive = True

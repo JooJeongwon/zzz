@@ -1,6 +1,7 @@
 package com.zzz.core.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.zzz.core.api.dto.HeartbeatRequest;
 import com.zzz.core.api.dto.UserLoginRequest;
 import com.zzz.core.api.dto.UserRegisterRequest;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
@@ -32,6 +34,9 @@ class UserIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @MockBean
+    private FirebaseMessaging firebaseMessaging;
 
     @Test
     @DisplayName("회원가입 -> 로그인 -> 상태 변경 -> 하트비트 전송 시나리오 테스트")

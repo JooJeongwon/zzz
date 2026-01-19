@@ -11,3 +11,4 @@ redis>=5.0.1
 requests>=2.31.0
 langchain-openai>=0.0.5
 langchain-google-genai>=0.0.5
+aio-pika>=9.4.0

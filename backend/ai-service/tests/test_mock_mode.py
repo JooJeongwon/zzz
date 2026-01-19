@@ -1,5 +1,10 @@
 from fastapi.testclient import TestClient
 from app.main import app
+from app.services.llm_service import llm_service
+from app.services.llm_providers import MockLLMProvider
+
+# Force Mock Provider for these tests
+llm_service.provider = MockLLMProvider()
 
 client = TestClient(app)
 
