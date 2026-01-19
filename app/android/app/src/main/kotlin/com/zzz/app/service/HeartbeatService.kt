@@ -4,8 +4,10 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.Build
 import android.os.IBinder
@@ -30,6 +32,23 @@ class HeartbeatService : Service() {
     private lateinit var heartbeatDao: HeartbeatDao
     
     private var currentUserId: Long = -1L
+    private var currentInterval = HEARTBEAT_INTERVAL_NORMAL
+
+    private val screenReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                Intent.ACTION_SCREEN_ON -> {
+                    Log.d("HeartbeatService", "Screen ON: Resetting interval to 10m and triggering heartbeat.")
+                    currentInterval = HEARTBEAT_INTERVAL_NORMAL
+                    restartHeartbeatLoop(immediate = true)
+                }
+                Intent.ACTION_SCREEN_OFF -> {
+                    Log.d("HeartbeatService", "Screen OFF: Increasing interval to 20m.")
+                    currentInterval = HEARTBEAT_INTERVAL_DOZE
+                }
+            }
+        }
+    }
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
@@ -41,6 +60,12 @@ class HeartbeatService : Service() {
         createNotificationChannel()
         database = AppDatabase.getDatabase(this)
         heartbeatDao = database.heartbeatDao()
+
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_ON)
+            addAction(Intent.ACTION_SCREEN_OFF)
+        }
+        registerReceiver(screenReceiver, filter)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -54,39 +79,50 @@ class HeartbeatService : Service() {
         startForeground(1, createNotification())
 
         if (heartbeatJob?.isActive != true) {
-            heartbeatJob = serviceScope.launch {
-                var backoffTime = 60 * 1000L // Start with 1 min backoff if failed
-
-                while (isActive) {
-                    if (currentUserId == -1L) {
-                        currentUserId = tokenManager.getUserId()
-                    }
-
-                    if (currentUserId != -1L) {
-                        try {
-                            val success = performHeartbeat(currentUserId)
-                            if (success) {
-                                backoffTime = 60 * 1000L // Reset backoff
-                                delay(HEARTBEAT_INTERVAL_MS)
-                            } else {
-                                Log.w("HeartbeatService", "Heartbeat critical fail. Retrying in ${backoffTime/1000}s")
-                                delay(backoffTime)
-                                backoffTime = (backoffTime * 2).coerceAtMost(HEARTBEAT_INTERVAL_MS)
-                            }
-                        } catch (e: Exception) {
-                            Log.e("HeartbeatService", "Error in heartbeat loop", e)
-                            delay(backoffTime)
-                            backoffTime = (backoffTime * 2).coerceAtMost(HEARTBEAT_INTERVAL_MS)
-                        }
-                    } else {
-                        Log.w("HeartbeatService", "User ID missing. Waiting...")
-                        delay(60 * 1000L) 
-                    }
-                }
-            }
+            startHeartbeatLoop()
         }
 
         return START_REDELIVER_INTENT
+    }
+
+    private fun startHeartbeatLoop(initialDelay: Long = 0) {
+        heartbeatJob?.cancel()
+        heartbeatJob = serviceScope.launch {
+            if (initialDelay > 0) delay(initialDelay)
+            
+            var backoffTime = 60 * 1000L // Start with 1 min backoff if failed
+
+            while (isActive) {
+                if (currentUserId == -1L) {
+                    currentUserId = tokenManager.getUserId()
+                }
+
+                if (currentUserId != -1L) {
+                    try {
+                        val success = performHeartbeat(currentUserId)
+                        if (success) {
+                            backoffTime = 60 * 1000L // Reset backoff
+                            delay(currentInterval)
+                        } else {
+                            Log.w("HeartbeatService", "Heartbeat critical fail. Retrying in ${backoffTime/1000}s")
+                            delay(backoffTime)
+                            backoffTime = (backoffTime * 2).coerceAtMost(currentInterval)
+                        }
+                    } catch (e: Exception) {
+                        Log.e("HeartbeatService", "Error in heartbeat loop", e)
+                        delay(backoffTime)
+                        backoffTime = (backoffTime * 2).coerceAtMost(currentInterval)
+                    }
+                } else {
+                    Log.w("HeartbeatService", "User ID missing. Waiting...")
+                    delay(60 * 1000L) 
+                }
+            }
+        }
+    }
+
+    private fun restartHeartbeatLoop(immediate: Boolean) {
+        startHeartbeatLoop(if (immediate) 0 else currentInterval)
     }
 
     private suspend fun performHeartbeat(userId: Long): Boolean {
@@ -206,10 +242,16 @@ class HeartbeatService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         serviceJob.cancel()
+        try {
+            unregisterReceiver(screenReceiver)
+        } catch (e: Exception) {
+            Log.e("HeartbeatService", "Receiver not registered", e)
+        }
     }
 
     companion object {
         const val CHANNEL_ID = "HeartbeatChannel"
-        private const val HEARTBEAT_INTERVAL_MS = 10 * 60 * 1000L // 10 minutes
+        private const val HEARTBEAT_INTERVAL_NORMAL = 10 * 60 * 1000L // 10 minutes
+        private const val HEARTBEAT_INTERVAL_DOZE = 20 * 60 * 1000L // 20 minutes
     }
 }

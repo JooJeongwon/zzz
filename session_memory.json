@@ -1,18 +1,17 @@
 {
-  "last_task": "Refactor AI Service to Lazy Loading",
+  "last_task": "Optimize Android Battery Usage",
   "technical_details": {
-    "module": "backend/ai-service",
-    "class": "GeminiLLMProvider",
+    "module": "app/android/app/src/main/kotlin/com/zzz/app/service",
+    "class": "HeartbeatService",
     "changes": [
-      "Changed __init__ to store api_key only",
-      "Implemented @property for chat_model and embeddings",
-      "Deferred ChatGoogleGenerativeAI and GoogleGenerativeAIEmbeddings initialization to first access",
-      "Updated Task.md"
+      "Implemented BroadcastReceiver for Screen On/Off events",
+      "Added adaptive heartbeat interval logic (10m when active, 20m when dozing)",
+      "Refactored heartbeat loop to allow immediate restart on screen on",
+      "Updated Task.md and ROADMAP.md"
     ]
   },
   "next_steps": [
     "Security: API audit and encryption",
-    "Optimization: Battery optimization (Android)",
     "Deploy: AWS & CI/CD"
   ]
 }

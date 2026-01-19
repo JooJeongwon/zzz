@@ -23,14 +23,39 @@ public class RabbitMqConfig {
     public static final String AI_REQUEST_CHAT_ROUTING_KEY = "ai.request.chat";
     public static final String AI_REQUEST_RECAP_ROUTING_KEY = "ai.request.recap";
 
+    // DLQ Constants
+    public static final String DLX_NAME = "zzz.dlx";
+    public static final String DLQ_NAME = "zzz.dlq";
+
+    @Bean
+    public Queue deadLetterQueue() {
+        return new Queue(DLQ_NAME, true);
+    }
+
+    @Bean
+    public TopicExchange deadLetterExchange() {
+        return new TopicExchange(DLX_NAME);
+    }
+
+    @Bean
+    public Binding deadLetterBinding() {
+        return BindingBuilder.bind(deadLetterQueue()).to(deadLetterExchange()).with("#");
+    }
+
     @Bean
     public Queue notificationQueue() {
-        return new Queue(NOTIFICATION_QUEUE, true);
+        return org.springframework.amqp.core.QueueBuilder.durable(NOTIFICATION_QUEUE)
+                .withArgument("x-dead-letter-exchange", DLX_NAME)
+                .withArgument("x-dead-letter-routing-key", "dead.letter.notification")
+                .build();
     }
 
     @Bean
     public Queue aiResponseQueue() {
-        return new Queue(AI_RESPONSE_QUEUE, true);
+        return org.springframework.amqp.core.QueueBuilder.durable(AI_RESPONSE_QUEUE)
+                .withArgument("x-dead-letter-exchange", DLX_NAME)
+                .withArgument("x-dead-letter-routing-key", "dead.letter.ai.response")
+                .build();
     }
 
     @Bean

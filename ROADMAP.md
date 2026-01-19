@@ -57,5 +57,5 @@ AI 페르소나 기능을 위한 별도 서비스를 구축합니다.
 - [x] **Feature:** Android Offline Mode (Room DB & Batch Upload).
 - [x] **Feature:** Push Notification (FCM) - Client 딥링크 처리 예정 (Backend 발송 로직 완료).
 - [ ] **Security:** API 보안 감사 및 데이터 암호화 적용.
-- [ ] **Optimization:** 배터리 소모 최적화 (Android).
+- [x] **Optimization:** 배터리 소모 최적화 (Android).
 - [ ] **Deploy:** AWS 배포 및 CI/CD 파이프라인 구축.

@@ -71,6 +71,16 @@ C. 푸시 알림 딥링크 (Deep Linking)
 
 [x] 알림 타입(채팅, 상태 변화)에 따라 채팅방(ChatScreen) 또는 메인 화면으로 라우팅 처리.
 
+D. 배터리 소모 최적화 (Android)
+
+문제점: 고정된 Heartbeat 주기(10분)는 화면이 꺼져 있는 동안 불필요한 배터리 소모를 유발할 수 있으며, Doze 모드 진입을 방해할 수 있습니다.
+
+작업:
+
+[x] HeartbeatService에 BroadcastReceiver(Screen On/Off) 추가.
+
+[x] 화면 꺼짐 시 전송 주기를 20분으로 늘리고, 켜짐 시 10분으로 복구하며 즉시 Heartbeat 전송.
+
 3. 🛠️ 구조적 리팩토링 (Structural Refactoring)
 코드 품질(SOLID 원칙)과 유지보수성을 위한 개선 사항입니다.
 
@@ -139,3 +149,39 @@ A. 이벤트 기반(Event-Driven) 통신 도입
 [x] Android Foreground Service: 백그라운드 Heartbeat 전송을 위한 기본 서비스 구현.
 
 [x] Event-Driven Architecture (AI): RabbitMQ를 통한 Core-AI 비동기 통신 (Publish/Subscribe) 구현 완료. [Task 4-A]
+
+코드 품질 및 잠재적 리스크 점검
+
+A. RabbitMQ 메시지 신뢰성 (Data Durability)
+
+[x] RabbitMqConfig.java에 DLQ (Dead Letter Queue) 및 DLX (Dead Letter Exchange) 설정 추가 완료.
+
+B. 오프라인 배치 업로드의 Timestamp 처리
+
+상황: 안드로이드 HeartbeatEntity는 timestamp를 저장합니다.
+
+리스크: 오프라인 상태가 길어져서 5시간 전의 데이터가 지금 업로드될 경우, 서버의 UserStatusService가 이 오래된 데이터를 기준으로 사용자를 "현재 온라인"으로 표시하면 안 됩니다.
+
+[x] 확인 완료: UserStatusService.updateHeartbeat에서 timestamp가 15분 이상 지난 경우 Redis(실시간 상태)를 갱신하지 않고 DB(히스토리)만 저장하는 로직 검증됨 (Unit Test 포함).
+
+C. iOS 백그라운드 제약 (CoreDataStack)
+
+코드: HeartbeatRepository.swift에서 CoreData 저장은 잘 구현되어 있습니다.
+
+현실적 제약: iOS는 앱이 완전히 종료(Kill)되면 백그라운드 작업도 멈춥니다. Android의 Foreground Service처럼 지속적으로 돌기 어렵습니다. 따라서 iOS 사용자는 앱을 켜는 순간(Foreground 진입 시)에 쌓여있던 데이터가 한 번에 전송될 텐데, 이때 "상대방이 갑자기 5시간치 활동 기록을 한 번에 보게 되는" UX가 발생할 수 있습니다. 이는 기술적 버그라기보다 iOS 플랫폼의 특성이므로 기획적인 타협(예: "방금 접속함"으로 퉁치기 등)이 필요할 수 있습니다.
+
+다음 단계 추천 (Priority):
+
+테스트 보강 (Test Coverage):
+
+[x] AuthService Unit Test 구현 완료.
+[x] UserStatusService Unit Test 구현 완료.
+RabbitMQ 연동 부분은 통합 테스트(Integration Test)로 검증해야 합니다.
+
+푸시 알림 딥링크 (Deep Linking) [Task 2.C]:
+
+현재 인프라는 튼튼하므로, 이제 사용자 눈에 보이는 편의 기능을 추가할 차례입니다. 알림을 눌렀을 때 채팅방이나 상태 화면으로 바로 이동하게 해주세요. (채팅방 이동 구현 확인됨).
+
+배포 파이프라인 (CI/CD):
+
+프로젝트 규모가 커졌으므로, Docker Compose를 활용하여 AWS EC2 등에 실제로 띄워보는 경험을 해보시는 것을 추천합니다. RabbitMQ와 Redis가 포함된 인프라 배포는 로컬과 다를 수 있습니다.
