@@ -50,6 +50,7 @@ AI 페르소나 기능을 위한 별도 서비스를 구축합니다.
 - [x] **Test:** 클라이언트(Flutter) 위젯 테스트 및 모델 유닛 테스트 완료.
 - [x] **Client (Native):** iOS Heartbeat 전송 로직 실제 구현 (Mock 제거).
 - [x] **Security:** Refresh Token Strategy 구현 (Backend & Android Native).
+- [x] **Refactor:** 하드코딩 제거 및 환경 변수 분리 (Flutter .env / Backend application.yml).
 - [ ] **Security:** API 보안 감사 및 데이터 암호화 적용.
 - [ ] **Optimization:** 배터리 소모 최적화 (Android).
 - [ ] **Deploy:** AWS 배포 및 CI/CD 파이프라인 구축.

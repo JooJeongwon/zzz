@@ -42,13 +42,13 @@ A. 진정한 이벤트 기반(Event-Driven) 통신 구현
 
 RabbitMQ/Kafka 도입: Core 서버는 "메시지 수신됨" 이벤트만 큐에 던지고 즉시 리턴(Ack)합니다. AI 서비스는 큐를 구독(Subscribe)하다가 비동기로 메시지를 처리하고, 답변 생성 후 다시 큐를 통해 Core나 채팅 서버로 알리는 구조로 변경해야 아키텍처 문서와 일치하게 됩니다.
 
-B. 하드코딩 제거 및 환경 분리
+B. 하드코딩 제거 및 환경 분리 [Completed]
 
 현황: ApiService.dart에 http://10.0.2.2:8080과 같은 IP가 하드코딩되어 있습니다. LLMService.py에도 모델명 등이 박혀 있습니다.
 
-리팩토링: * Flutter: flutter_dotenv 패키지나 Flavors를 사용하여 DEV, PROD 환경에 따라 Base URL이 자동으로 변경되도록 수정해야 합니다.
+리팩토링: * [x] Flutter: flutter_dotenv 패키지나 Flavors를 사용하여 DEV, PROD 환경에 따라 Base URL이 자동으로 변경되도록 수정해야 합니다.
 
-Backend: application.yml이나 .env 파일로 중요 설정 값(모델 파라미터, 임계값 등)을 외부로 뺍니다.
+* [x] Backend: application.yml이나 .env 파일로 중요 설정 값(모델 파라미터, 임계값 등)을 외부로 뺍니다.
 
 C. AI 서비스의 Mocking 패턴 개선 (Strategy Pattern)
 

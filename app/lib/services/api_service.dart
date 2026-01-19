@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/partner_status.dart';
 import '../models/user_status.dart';
 import '../models/chat_message.dart';
@@ -10,6 +11,13 @@ import '../models/chat_message.dart';
 class ApiService {
   // Android Emulator: 10.0.2.2, iOS Simulator/Web: localhost
   static String get baseUrl {
+    // 1. Check .env first
+    final envUrl = dotenv.env['API_BASE_URL'];
+    if (envUrl != null && envUrl.isNotEmpty) {
+      return envUrl;
+    }
+
+    // 2. Fallback to smart defaults
     if (kIsWeb) return 'http://localhost:8080/api/v1';
     if (Platform.isAndroid) return 'http://10.0.2.2:8080/api/v1';
     return 'http://Joo-MacBookAir.local:8080/api/v1';

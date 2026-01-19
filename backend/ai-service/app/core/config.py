@@ -10,6 +10,8 @@ class Settings(BaseSettings):
 
     # Gemini
     GEMINI_API_KEY: str = "changeme"
+    GEMINI_MODEL_NAME: str = "gemini-pro"
+    GEMINI_EMBEDDING_MODEL: str = "models/embedding-001"
     
     # Vector DB (Pinecone)
     PINECONE_API_KEY: str = "changeme"

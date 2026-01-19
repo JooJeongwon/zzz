@@ -20,12 +20,12 @@ class LLMService:
             try:
                 self.chat_model = ChatGoogleGenerativeAI(
                     google_api_key=self.api_key,
-                    model="gemini-pro",
+                    model=settings.GEMINI_MODEL_NAME,
                     temperature=0.7
                 )
                 self.embeddings = GoogleGenerativeAIEmbeddings(
                     google_api_key=self.api_key,
-                    model="models/embedding-001"
+                    model=settings.GEMINI_EMBEDDING_MODEL
                 )
                 self.is_active = True
                 logger.info("LLMService initialized successfully with Gemini.")
