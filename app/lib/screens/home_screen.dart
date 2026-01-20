@@ -10,6 +10,9 @@ import '../widgets/status_change_dialog.dart';
 import 'login_screen.dart';
 import 'connect_couple_screen.dart';
 import 'chat_screen.dart';
+import '../widgets/design/clean_card.dart';
+import '../widgets/design/pixel_pet.dart';
+import '../theme/colors.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -78,7 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _timer?.cancel();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Session expired. Please login again.')),
+            const SnackBar(content: Text('세션이 만료되었습니다. 다시 로그인해주세요.')),
           );
           _logout();
         }
@@ -92,134 +95,78 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-    Future<void> _updateMyStatus(UserStatus status, int? duration) async {
+  Future<void> _updateMyStatus(UserStatus status, int? duration) async {
+    setState(() => _myStatus = status); // Optimistic update
 
-      setState(() => _myStatus = status); // Optimistic update
+    final success = await ApiService.updateStatus(status, durationMinutes: duration);
 
-      final success = await ApiService.updateStatus(status, durationMinutes: duration);
+    if (!mounted) return;
 
+    if (!success) {
+       // Revert or show error
+       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('상태 변경에 실패했습니다.')));
+    }
+  }
+
+  Future<void> _startHeartbeatService() async {
+    String message;
+    try {
+      final userId = await ApiService.getUserId();
+      final token = await ApiService.getToken();
       
-
-      if (!mounted) return;
-
-  
-
-      if (!success) {
-
-         // Revert or show error
-
-         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to update status')));
-
+      if (userId == null || token == null) {
+        message = "Error: User ID or Token not found.";
       }
-
-    }
-
-  
-
-    Future<void> _startHeartbeatService() async {
-
-      String message;
-
-      try {
-        final userId = await ApiService.getUserId();
-        final token = await ApiService.getToken();
-        
-        if (userId == null || token == null) {
-          message = "Error: User ID or Token not found.";
-        }
-        else {
-          final String result = await platform.invokeMethod('startHeartbeat', {
-            'userId': userId,
-            'accessToken': token,
-            'baseUrl': ApiService.baseUrl,
-          });
-          message = 'Success: $result';
-        }
+      else {
+        final String result = await platform.invokeMethod('startHeartbeat', {
+          'userId': userId,
+          'accessToken': token,
+          'baseUrl': ApiService.baseUrl,
+        });
+        message = 'Success: $result';
       }
-
-      on PlatformException catch (e) {
-
-        message = "Failed to start service: '${e.message}'.";
-
-      }
-
-  
-
-      setState(() {
-
-        _serviceStatusMessage = message;
-
-      });
-
+    }
+    on PlatformException catch (e) {
+      message = "Failed to start service: '${e.message}'.";
     }
 
-  
+    setState(() {
+      _serviceStatusMessage = message;
+    });
+  }
 
-    void _logout() async {
+  void _logout() async {
+    await ApiService.logout();
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+    );
+  }
 
-      await ApiService.logout();
-
-      if (!mounted) return;
-
-      Navigator.of(context).pushReplacement(
-
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-
-      );
-
-    }
-
-  
-
-    
-
-  
-
-    @override
-
-    Widget build(BuildContext context) {
-
-      return Scaffold(
-
-        appBar: AppBar(
-
-          title: const Text('ZZZ'),
-
-          actions: [
-
-            IconButton(icon: const Icon(Icons.link), onPressed: () {
-
-               Navigator.push(context, MaterialPageRoute(builder: (_) => const ConnectCoupleScreen()));
-
-            }),
-
-            IconButton(icon: const Icon(Icons.logout), onPressed: _logout),
-
-          ],
-
-        ),
-
-        body: _isLoading 
-
-          ? const Center(child: CircularProgressIndicator()) 
-
-          : _buildBody(),
-
-        floatingActionButton: FloatingActionButton(
-
-          onPressed: _startHeartbeatService,
-
-          tooltip: 'Start Background Service',
-
-          child: const Icon(Icons.favorite),
-
-        ),
-
-      );
-
-    }
-
-  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('ZZZ'),
+        actions: [
+          IconButton(icon: const Icon(Icons.link), onPressed: () {
+             Navigator.push(context, MaterialPageRoute(builder: (_) => const ConnectCoupleScreen()));
+          }),
+          IconButton(icon: const Icon(Icons.logout), onPressed: _logout),
+        ],
+      ),
+      body: SafeArea(
+        child: _isLoading 
+        ? const Center(child: LoadingDots()) 
+        : _buildBody(),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _startHeartbeatService,
+        tooltip: 'Start Background Service',
+        child: const Icon(Icons.favorite),
+      ),
+    );
+  }
 
   Widget _buildBody() {
     if (_partnerStatus == null) {
@@ -227,13 +174,34 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('No partner info available.'),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const ConnectCoupleScreen()));
-              },
-              child: const Text('Connect with Partner'),
+            const PixelPet(status: UserStatus.UNKNOWN, size: 120),
+            const SizedBox(height: 24),
+            const Text(
+              '연결된 파트너가 없습니다.',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimaryDay),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '초대 코드를 공유하여\n커플을 연결해보세요!',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textSecondaryDay),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: 200,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const ConnectCoupleScreen()));
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.statusOnline,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  elevation: 0,
+                ),
+                child: const Text('파트너 연결하기'),
+              ),
             ),
           ],
         ),
@@ -284,7 +252,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
-                      'Last active: ${_formatTime(partner.lastActiveAt!)}',
+                      '마지막 활동: ${_formatTime(partner.lastActiveAt!)}',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ),
@@ -312,7 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
                      )));
                   },
                   icon: const Icon(Icons.chat_bubble_outline, size: 20),
-                  label: const Text("Chat"),
+                  label: const Text("채팅"),
                 ),
               ],
             ),
@@ -352,7 +320,7 @@ class _HomeScreenState extends State<HomeScreen> {
                        Column(
                          crossAxisAlignment: CrossAxisAlignment.start,
                          children: [
-                           Text('My Status', style: Theme.of(context).textTheme.bodySmall),
+                           Text('나의 상태', style: Theme.of(context).textTheme.bodySmall),
                            const SizedBox(height: 4),
                            Text(
                              _myStatus.label,
@@ -369,9 +337,14 @@ class _HomeScreenState extends State<HomeScreen> {
                  ),
                  const SizedBox(height: 20),
                  const Text(
-                   "Tap to update your status",
+                   "상태를 변경하려면 탭하세요",
                    style: TextStyle(color: AppColors.textSecondaryDay),
                  ),
+                 if (_serviceStatusMessage.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 20),
+                      child: Text(_serviceStatusMessage, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                    ),
                ],
              ),
           ),
@@ -380,50 +353,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  
+  String _formatTime(DateTime time) {
+    final now = DateTime.now();
+    final diff = now.difference(time);
 
-                Text(_serviceStatusMessage, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+    if (diff.inMinutes < 1) return '방금 전';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}분 전';
+    if (diff.inHours < 24) return '${diff.inHours}시간 전';
 
-  
-
-              ],
-
-  
-
-            ),
-
-  
-
-          );
-
-  
-
-        }
-
-  
-
-    
-
-  
-
-    String _formatTime(DateTime time) {
-
-      // Using intl package for better formatting
-
-      // Need to import 'package:intl/intl.dart' at top of file
-
-      final now = DateTime.now();
-
-      final diff = now.difference(time);
-
-      if (diff.inMinutes < 1) return '방금 전';
-
-      if (diff.inMinutes < 60) return '${diff.inMinutes}분 전';
-
-      if (diff.inHours < 24) return '${diff.inHours}시간 전';
-
-      return DateFormat('M월 d일 a h:mm', 'ko_KR').format(time);
-
-    }
-
+    return DateFormat('M월 d일 a h:mm', 'ko_KR').format(time);
   }
+}

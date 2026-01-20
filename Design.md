@@ -152,38 +152,41 @@ Hero: 홈 → 채팅 화면 전환 시 프로필/캐릭터에 Hero 위젯 필수
 
 Design Checkpoint 개발 완료 후 다음 항목을 점검하세요.
 
-[ ] 화면에 그라데이션이 사용되지 않았는가?
+[x] 화면에 그라데이션이 사용되지 않았는가?
 
-[ ] 그림자(Shadow) 대신 테두리(Border)로 구분감이 표현되었는가?
+[x] 그림자(Shadow) 대신 테두리(Border)로 구분감이 표현되었는가?
 
-[ ] 모든 모서리가 둥글게(24px+) 처리되었는가?
+[x] 모든 모서리가 둥글게(24px+) 처리되었는가?
 
-[ ] 텍스트의 자간(-0.5)과 행간(1.4)이 적용되었는가?
+[x] 텍스트의 자간(-0.5)과 행간(1.4)이 적용되었는가?
 
-[ ] 캐릭터가 이미지가 아닌 코드로 그려진 Pixel Art인가?
+[x] 캐릭터가 이미지가 아닌 코드로 그려진 Pixel Art인가?
 ## 6. 구현 현황 (Implementation Status) - 2026.01.20
 
 ### ✅ 완료된 작업 (Completed)
 1. **Design System Foundation**
    - `lib/theme/colors.dart`: Matte Pastels 컬러 팔레트 구현 (#FAFAFA, #2D3436 등).
-   - `lib/theme/text_styles.dart`: Typography 스타일 정의 (Pretendard Rounded 기반).
+   - `lib/theme/text_styles.dart`: Typography 스타일 정의 (Google Fonts `M PLUS Rounded 1c` 적용).
    - `lib/theme/app_theme.dart`: Material3 테마에 Design System 적용.
 
 2. **Core Components**
    - `CleanCard`: 그림자 제거, 테두리(Border) 기반의 카드 컴포넌트 구현.
-   - `PixelPet`: 16x16 Pixel Art 캐릭터 + **숨쉬기(Breathing) 애니메이션** 구현.
-   - `ScaleTap` / `CleanCard`: **Scale Down (95%)** 인터랙션 및 **Haptic Feedback** 적용 완료.
-   - `StatusChangeDialog`: Squircle 형태 및 Chip Group Time Selector 적용.
+   - `PixelPet`: 16x16 Pixel Art + **숨쉬기(Breathing) & 눈 깜빡임(Blink)** 애니메이션 구현.
+   - `ScaleTap` / `CleanCard`: Scale Down (95%) 인터랙션 및 **Haptic Feedback** 적용 완료.
+   - `StatusChangeDialog`: Squircle 형태, Chip Group Time Selector, Haptic Feedback 적용.
+   - `LoadingDots`: 커스텀 로딩 애니메이션 및 Empty State 디자인 적용.
 
 3. **Screen Refactoring**
-   - **Home Screen**: Partner Card + My Control Panel 레이아웃, Pixel Pet 애니메이션 적용.
-   - **Chat Screen**: "Paper Cut" 스타일 (No Shadow) & Styled Bubbles.
+   - **Home Screen**: 
+     - Partner Card (Top 55%) + My Control Panel (Bottom 45%).
+     - Safe Area (Notch) 대응 완료.
+     - Localization (한글화) 및 Empty State (Pixel Pet + Call logic) 개선.
+   - **Chat Screen**: 
+     - "Paper Cut" 스타일 (No Shadow) & Styled Bubbles.
+     - 메시지 빌더 로직 리팩토링 및 한글 날짜 포맷 적용.
 
 ### 🔜 진행 예정 작업 (Next Steps)
-1. **Assets & Fonts**
-   - `Pretendard Rounded` 폰트 파일 에셋 추가 및 `pubspec.yaml` 등록 필요.
-   - 런치 스크린(Splash) 디자인 적용.
-
-2. **Remaining Screens**
+1. **Remaining Screens**
    - 로그인/회원가입 화면에 디자인 시스템 적용.
    - 커플 연결 화면(Connect Couple) UI 개선.
+   - 런치 스크린(Splash) 디자인 적용.

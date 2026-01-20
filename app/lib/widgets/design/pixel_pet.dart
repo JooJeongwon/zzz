@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../models/user_status.dart';
 import '../../theme/colors.dart';
@@ -19,14 +20,16 @@ class PixelPet extends StatefulWidget {
 class _PixelPetState extends State<PixelPet> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _breathingAnimation;
+  Timer? _blinkTimer;
+  bool _isBlinking = false;
 
   @override
   void initState() {
     super.initState();
-    // Breathing: 3-second cycle, moving up and down slightly (5px)
+    // Breathing: 3-second cycle
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500), // Half cycle is 1.5s -> Full 3s
+      duration: const Duration(milliseconds: 1500),
     );
 
     _breathingAnimation = Tween<double>(begin: 0.0, end: -10.0).animate(
@@ -34,11 +37,29 @@ class _PixelPetState extends State<PixelPet> with SingleTickerProviderStateMixin
     );
 
     _controller.repeat(reverse: true);
+    
+    // Random Blink
+    _scheduleBlink();
+  }
+
+  void _scheduleBlink() {
+    _blinkTimer = Timer(Duration(milliseconds: 2000 + (3000 * (DateTime.now().millisecond / 1000)).toInt()), () {
+        if (mounted) {
+          setState(() => _isBlinking = true);
+          Future.delayed(const Duration(milliseconds: 150), () {
+            if (mounted) {
+              setState(() => _isBlinking = false);
+              _scheduleBlink();
+            }
+          });
+        }
+    });
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _blinkTimer?.cancel();
     super.dispose();
   }
 
@@ -51,7 +72,7 @@ class _PixelPetState extends State<PixelPet> with SingleTickerProviderStateMixin
           offset: Offset(0, _breathingAnimation.value),
           child: CustomPaint(
             size: Size(widget.size, widget.size),
-            painter: _PixelPetPainter(widget.status),
+            painter: _PixelPetPainter(widget.status, _isBlinking),
           ),
         );
       },
@@ -61,8 +82,9 @@ class _PixelPetState extends State<PixelPet> with SingleTickerProviderStateMixin
 
 class _PixelPetPainter extends CustomPainter {
   final UserStatus status;
+  final bool isBlinking;
 
-  _PixelPetPainter(this.status);
+  _PixelPetPainter(this.status, this.isBlinking);
 
   Color get _primaryColor {
     switch (status) {
@@ -125,13 +147,33 @@ class _PixelPetPainter extends CustomPainter {
     } else {
       // Online / Smile
        // Eyes
-      canvas.drawRect(Rect.fromLTWH(6 * pixelSize, 7 * pixelSize, pixelSize, pixelSize), facePaint);
-      canvas.drawRect(Rect.fromLTWH(9 * pixelSize, 7 * pixelSize, pixelSize, pixelSize), facePaint);
+      if (isBlinking) {
+         // Closed eyes for blink
+         canvas.drawRect(Rect.fromLTWH(6 * pixelSize, 7 * pixelSize, pixelSize, pixelSize), paint); // Masking with primary color would be wrong if facePaint is white.
+         // Actually we need to draw "Line" eyes instead of "Block" eyes when blinking
+         // Or just skipping the white eyes drawing will make them "color of body" which might look like closed if we draw a line?
+         // Let's draw a line of body color (or darker?) NO, usually closing eyes means drawing a line.
+         
+         // Let's use body color to 'erase' white, then draw a line.
+         // But here facePaint is white. 
+         // Strategy: Draw eyes only if NOT blinking. If blinking, draw line.
+         final blinkPaint = Paint()..color = Colors.black.withOpacity(0.2); // Darker line? Or just simple line.
+         // Simpler: Just don't draw the white blocks. 
+         // And maybe draw a thin line?
+         canvas.drawRect(Rect.fromLTWH(6 * pixelSize, 8 * pixelSize, pixelSize, 1), blinkPaint);
+         canvas.drawRect(Rect.fromLTWH(9 * pixelSize, 8 * pixelSize, pixelSize, 1), blinkPaint);
+      } else {
+        canvas.drawRect(Rect.fromLTWH(6 * pixelSize, 7 * pixelSize, pixelSize, pixelSize), facePaint);
+        canvas.drawRect(Rect.fromLTWH(9 * pixelSize, 7 * pixelSize, pixelSize, pixelSize), facePaint);
+      }
       // Mouth
       canvas.drawRect(Rect.fromLTWH(7 * pixelSize, 10 * pixelSize, 2 * pixelSize, pixelSize), facePaint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _PixelPetPainter oldDelegate) {
+    return oldDelegate.status != status || oldDelegate.isBlinking != isBlinking;
+  }
+
 }

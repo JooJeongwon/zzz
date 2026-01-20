@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../models/user_status.dart';
 
 class StatusChangeDialog extends StatefulWidget {
@@ -145,6 +146,7 @@ class _StatusChangeDialogState extends State<StatusChangeDialog> {
 
     return InkWell(
       onTap: () {
+        HapticFeedback.lightImpact();
         setState(() {
           _selectedStatus = status;
           if (status == UserStatus.ONLINE) {

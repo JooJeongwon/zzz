@@ -218,6 +218,34 @@ C. Screen Layout Implementation
 - [x] Chat Screen: Paper Cut 스타일 (No Shadow) & Styled Bubbles.
 
 D. Polish & Assets
-- [ ] Font Assets (Pretendard Rounded) 실제 적용.
+- [x] Font Assets: Google Fonts (M PLUS Rounded 1c) 적용 완료.
 - [ ] Splash Screen 디자인.
-- [x] Animations: PixelPet Breathing & ScaleTap Interaction 구현 완료.
+- [x] Animations: PixelPet Breathing/Blink, ScaleTap, LoadingDots 구현 완료.
+
+⚙️ 2. 앱 개발 및 로직 관련 사항 (Engineering & Logic)
+
+"코드의 품질, 안정성, 기능적 작동을 위한 작업"
+
+채팅 로직 리팩토링 (Code Quality)
+
+내용: 채팅 화면 코드에서 '일반 메시지'와 '요약(Recap)'을 처리하는 코드가 섞여 있어 복잡합니다.
+
+작업: chat_screen.dart에서 _buildMessageRow 함수 내 분기 처리를 명확하게 분리하여 코드 정리.
+
+언어 통일 (Localization)
+
+내용: 코드 내에 한글('방금 전')과 영어('Connect with Partner')가 섞여 있어 사용자 경험을 해칩니다.
+
+작업: 앱 내 모든 텍스트를 한국어로 통일하고, 날짜 포맷도 intl 패키지를 활용해 한국식으로 변경.
+
+네트워크 에러 처리 (Stability)
+
+내용: 인터넷이 끊기거나 서버 오류 시 앱이 멈춘 것처럼 보이지 않게 처리해야 합니다.
+
+작업: API 호출 실패 시 "재시도" 버튼을 띄우거나, 상단에 "오프라인 상태" 알림 바 표시.
+
+다크 모드 자동화 (Logic)
+
+내용: 디자인 시스템에 있는 Night Mode 색상이 언제 적용될지 로직을 정해야 합니다.
+
+작업: 파트너가 SLEEP 상태가 되면 앱 전체 테마를 자동으로 어두운 색상(AppColors.backgroundNight)으로 전환하는 로직 구현.

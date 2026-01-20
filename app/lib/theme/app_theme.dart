@@ -13,7 +13,7 @@ class AppTheme {
         background: AppColors.backgroundDay,
         onSurface: AppColors.textPrimaryDay,
       ),
-      fontFamily: AppTextStyles.fontFamily,
+      // fontFamily: AppTextStyles.fontFamily, // Handled by GoogleFonts
       textTheme: TextTheme(
         displayLarge: AppTextStyles.titleLarge,
         titleLarge: AppTextStyles.titleMedium,
