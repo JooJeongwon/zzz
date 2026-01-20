@@ -194,8 +194,8 @@ A. 통합 테스트 환경 구축
 - [x] Core-AI 간의 메시지 큐 송수신 통합 테스트 작성.
 
 B. API 문서화
-- [ ] SpringDoc OpenAPI (Swagger) 적용.
-- [ ] 주요 API에 대한 설명 및 예제 값(@Schema) 추가.
+- [x] SpringDoc OpenAPI (Swagger) 적용.
+- [x] 주요 API에 대한 설명 및 예제 값(@Schema) 추가.
 
 C. 배포 스크립트 작성
 - [ ] GitHub Actions (CI) 설정: 코드 푸시 시 자동 테스트 및 빌드.
