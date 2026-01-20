@@ -221,583 +221,164 @@ class _HomeScreenState extends State<HomeScreen> {
 
   
 
-        Widget _buildBody() {
+  Widget _buildBody() {
+    if (_partnerStatus == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('No partner info available.'),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const ConnectCoupleScreen()));
+              },
+              child: const Text('Connect with Partner'),
+            ),
+          ],
+        ),
+      );
+    }
 
-  
+    final partner = _partnerStatus!;
+    final color = partner.status.color;
 
-          if (_partnerStatus == null) {
-
-  
-
-            return Center(
-
-  
-
-              child: Column(
-
-  
-
-                mainAxisAlignment: MainAxisAlignment.center,
-
-  
-
-                children: [
-
-  
-
-                  const Text('No partner info available.'),
-
-  
-
-                  const SizedBox(height: 20),
-
-  
-
-                  ElevatedButton(
-
-  
-
-                    onPressed: () {
-
-  
-
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const ConnectCoupleScreen()));
-
-  
-
-                    },
-
-  
-
-                    child: const Text('Connect with Partner'),
-
-  
-
-                  ),
-
-  
-
-                ],
-
-  
-
+    return Column(
+      children: [
+        // Partner Area (Top 55%)
+        Expanded(
+          flex: 55,
+          child: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceDay,
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(32),
+                bottomRight: Radius.circular(32),
               ),
-
-  
-
-            );
-
-  
-
-          }
-
-  
-
-      
-
-  
-
-          final partner = _partnerStatus!;
-
-  
-
-          final color = partner.status.color;
-
-  
-
-      
-
-  
-
-          return SingleChildScrollView(
-
-  
-
-            padding: const EdgeInsets.all(16),
-
-  
-
+              border: Border.all(color: AppColors.borderDay, width: 1.5),
+            ),
             child: Column(
-
-  
-
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-
-  
-
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-
-  
-
-                // My Status Selector
-
-  
-
-                Card(
-
-  
-
-                  elevation: 2,
-
-  
-
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-
-  
-
-                  child: InkWell(
-
-  
-
-                    onTap: () {
-
-  
-
-                      showDialog(
-
-  
-
-                        context: context,
-
-  
-
-                        builder: (context) => StatusChangeDialog(
-
-  
-
-                          currentStatus: _myStatus,
-
-  
-
-                          onStatusSelected: _updateMyStatus,
-
-  
-
-                        ),
-
-  
-
-                      );
-
-  
-
-                    },
-
-  
-
-                    borderRadius: BorderRadius.circular(16),
-
-  
-
-                    child: Padding(
-
-  
-
-                      padding: const EdgeInsets.all(16.0),
-
-  
-
-                      child: Row(
-
-  
-
-                        children: [
-
-  
-
-                          Container(
-
-  
-
-                            padding: const EdgeInsets.all(12),
-
-  
-
-                            decoration: BoxDecoration(
-
-  
-
-                              color: _myStatus.color.withOpacity(0.1),
-
-  
-
-                              shape: BoxShape.circle,
-
-  
-
-                            ),
-
-  
-
-                            child: Icon(_myStatus.icon, color: _myStatus.color, size: 32),
-
-  
-
-                          ),
-
-  
-
-                          const SizedBox(width: 16),
-
-  
-
-                          Column(
-
-  
-
-                            crossAxisAlignment: CrossAxisAlignment.start,
-
-  
-
-                            children: [
-
-  
-
-                              const Text('My Status', style: TextStyle(color: Colors.grey, fontSize: 12)),
-
-  
-
-                              const SizedBox(height: 4),
-
-  
-
-                              Text(
-
-  
-
-                                _myStatus.label,
-
-  
-
-                                style: TextStyle(
-
-  
-
-                                  fontSize: 18, 
-
-  
-
-                                  fontWeight: FontWeight.bold,
-
-  
-
-                                  color: _myStatus.color,
-
-  
-
-                                ),
-
-  
-
-                              ),
-
-  
-
-                            ],
-
-  
-
-                          ),
-
-  
-
-                          const Spacer(),
-
-  
-
-                          const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
-
-  
-
-                        ],
-
-  
-
-                      ),
-
-  
-
+                // Pixel Pet
+                Hero(
+                  tag: 'partner_pet',
+                  child: PixelPet(status: partner.status, size: 180),
+                ),
+                const SizedBox(height: 24),
+                // Partner Info
+                Text(
+                  partner.nickname,
+                  style: Theme.of(context).textTheme.displayLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  partner.status.label,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (partner.lastActiveAt != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      'Last active: ${_formatTime(partner.lastActiveAt!)}',
+                      style: Theme.of(context).textTheme.bodySmall,
                     ),
-
-  
-
+                  ),
+                if (partner.batteryLevel != null)
+                   Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.battery_std, size: 16, color: AppColors.textSecondaryDay),
+                        Text(
+                          '${partner.batteryLevel}%',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
                   ),
 
-  
-
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: () {
+                     Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(
+                       partnerId: partner.userId,
+                       partnerName: partner.nickname,
+                     )));
+                  },
+                  icon: const Icon(Icons.chat_bubble_outline, size: 20),
+                  label: const Text("Chat"),
                 ),
+              ],
+            ),
+          ),
+        ),
 
-  
-
-                const SizedBox(height: 30),
-
-  
-
-      
-
-  
-
-                // Partner Status Display
-
-  
-
-                Center(
-
-  
-
-                  child: Column(
-
-  
-
-                    children: [
-
-  
-
-                      Text(
-
-  
-
-                        partner.nickname,
-
-  
-
-                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-
-  
-
-                      ),
-
-  
-
-                      const SizedBox(height: 10),
-
-  
-
-                      Text(
-
-  
-
-                        partner.status.label,
-
-  
-
-                        style: TextStyle(fontSize: 18, color: color, fontWeight: FontWeight.w500),
-
-  
-
-                      ),
-
-  
-
-                      const SizedBox(height: 20),
-
-  
-
-                      // Character Placeholder
-
-  
-
-                      Container(
-
-  
-
-                        width: 150,
-
-  
-
-                        height: 150,
-
-  
-
-                        decoration: BoxDecoration(
-
-  
-
-                          // ignore: deprecated_member_use
-
-  
-
-                          color: color.withOpacity(0.2),
-
-  
-
-                          shape: BoxShape.circle,
-
-  
-
-                          border: Border.all(color: color, width: 4),
-
-  
-
+        // My Area (Bottom 45%) - Floating Control
+        Expanded(
+          flex: 45,
+          child: Container(
+             padding: const EdgeInsets.all(24),
+             child: Column(
+               mainAxisAlignment: MainAxisAlignment.center,
+               children: [
+                 CleanCard(
+                   onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => StatusChangeDialog(
+                          currentStatus: _myStatus,
+                          onStatusSelected: _updateMyStatus,
                         ),
-
-  
-
-                        child: Icon(
-
-  
-
-                          partner.status.icon,
-
-  
-
-                          size: 80,
-
-  
-
-                          color: color,
-
-  
-
-                        ),
-
-  
-
-                      ),
-
-  
-
-                      const SizedBox(height: 20),
-
-  
-
-      
-
-  
-
-                      ElevatedButton.icon(
-
-  
-
-                        onPressed: () {
-
-  
-
-                           Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(
-
-  
-
-                             partnerId: partner.userId,
-
-  
-
-                             partnerName: partner.nickname,
-
-  
-
-                           )));
-
-  
-
-                        },
-
-  
-
-                        icon: const Icon(Icons.chat_bubble_outline),
-
-  
-
-                        label: const Text("Chat"),
-
-  
-
-                        style: ElevatedButton.styleFrom(
-
-  
-
-                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-
-  
-
-                        ),
-
-  
-
-                      ),
-
-  
-
-      
-
-  
-
-                      const SizedBox(height: 20),
-
-  
-
-                      if (partner.batteryLevel != null)
-
-  
-
-                        Row(
-
-  
-
-                          mainAxisAlignment: MainAxisAlignment.center,
-
-  
-
-                          children: [
-
-  
-
-                            const Icon(Icons.battery_std, size: 20),
-
-  
-
-                            Text('${partner.batteryLevel}%'),
-
-  
-
-                          ],
-
-  
-
-                        ),
-
-  
-
-                      const SizedBox(height: 10),
-
-  
-
-                      if (partner.lastActiveAt != null)
-
-  
-
-                         Text(
-
-  
-
-                          'Last active: ${_formatTime(partner.lastActiveAt!)}',
-
-  
-
-                          style: const TextStyle(color: Colors.grey),
-
-  
-
+                      );
+                   },
+                   padding: const EdgeInsets.all(20),
+                   child: Row(
+                     children: [
+                       Container(
+                         padding: const EdgeInsets.all(16),
+                         decoration: BoxDecoration(
+                           color: _myStatus.color.withOpacity(0.1),
+                           shape: BoxShape.circle,
                          ),
-
-  
-
-                    ],
-
-  
-
-                  ),
-
-  
-
-                ),
-
-  
-
-                
-
-  
-
-                const SizedBox(height: 40),
+                         child: Icon(_myStatus.icon, color: _myStatus.color, size: 36),
+                       ),
+                       const SizedBox(width: 20),
+                       Column(
+                         crossAxisAlignment: CrossAxisAlignment.start,
+                         children: [
+                           Text('My Status', style: Theme.of(context).textTheme.bodySmall),
+                           const SizedBox(height: 4),
+                           Text(
+                             _myStatus.label,
+                             style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                               color: _myStatus.color
+                             ),
+                           ),
+                         ],
+                       ),
+                       const Spacer(),
+                       const Icon(Icons.arrow_forward_ios_rounded, color: AppColors.textSecondaryDay, size: 20),
+                     ],
+                   ),
+                 ),
+                 const SizedBox(height: 20),
+                 const Text(
+                   "Tap to update your status",
+                   style: TextStyle(color: AppColors.textSecondaryDay),
+                 ),
+               ],
+             ),
+          ),
+        ),
+      ],
+    );
+  }
 
   
 

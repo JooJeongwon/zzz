@@ -23,12 +23,12 @@ enum UserStatus {
 
   Color get color {
     switch (this) {
-      case UserStatus.ONLINE: return Colors.green;
-      case UserStatus.SLEEP: return Colors.indigo;
-      case UserStatus.STUDY: return Colors.orange;
-      case UserStatus.BUSY: return Colors.red;
-      case UserStatus.DISCHARGED: return Colors.grey;
-      case UserStatus.UNKNOWN: return Colors.grey.shade300;
+      case UserStatus.ONLINE: return const Color(0xFF74B9FF); // AppColors.statusOnline
+      case UserStatus.SLEEP: return const Color(0xFFA29BFE); // AppColors.statusSleep
+      case UserStatus.STUDY: return const Color(0xFF55EFC4); // AppColors.statusStudy
+      case UserStatus.BUSY: return const Color(0xFFFF7675); // AppColors.statusBusy
+      case UserStatus.DISCHARGED: return const Color(0xFF718096); // AppColors.textSecondaryNight
+      case UserStatus.UNKNOWN: return const Color(0xFFEEEEEE); // AppColors.borderDay
     }
   }
 

@@ -185,3 +185,39 @@ RabbitMQ 연동 부분은 통합 테스트(Integration Test)로 검증해야 합
 배포 파이프라인 (CI/CD):
 
 프로젝트 규모가 커졌으므로, Docker Compose를 활용하여 AWS EC2 등에 실제로 띄워보는 경험을 해보시는 것을 추천합니다. RabbitMQ와 Redis가 포함된 인프라 배포는 로컬과 다를 수 있습니다.
+
+## 5. 🚢 배포 및 운영 준비 (Deployment & Ops)
+서비스의 실제 배포와 운영을 위한 마무리 작업입니다.
+
+A. 통합 테스트 환경 구축
+- [ ] Testcontainers를 도입하여 Redis, MySQL, RabbitMQ 연동 테스트 작성.
+- [ ] Core-AI 간의 메시지 큐 송수신 통합 테스트 작성.
+
+B. API 문서화
+- [ ] SpringDoc OpenAPI (Swagger) 적용.
+- [ ] 주요 API에 대한 설명 및 예제 값(@Schema) 추가.
+
+C. 배포 스크립트 작성
+- [ ] GitHub Actions (CI) 설정: 코드 푸시 시 자동 테스트 및 빌드.
+- [ ] Docker Compose Prod 설정: 로컬 개발용이 아닌 배포용 설정 파일(재시작 정책, 볼륨 백업 등) 분리.
+
+6. 🎨 Design Implementation (UI/UX)
+Design.md 기반의 앱 디자인 구현 작업입니다.
+
+A. Design System Foundation
+- [x] Color Palette (Matte Pastels) & Typography (Pretendard) 정의.
+- [x] AppTheme (Material3) 적용.
+
+B. Core UI Components
+- [x] CleanCard: Border 기반의 심플한 카드 컴포넌트.
+- [x] PixelPet: 16x16 Dot Art 캐릭터 CustomPainter.
+- [x] StatusChangeDialog: Squircle Shape 및 직관적인 UI.
+
+C. Screen Layout Implementation
+- [x] Home Screen: Partner Top Card (55%) & My Floating Control (45%).
+- [x] Chat Screen: Paper Cut 스타일 (No Shadow) & Styled Bubbles.
+
+D. Polish & Assets
+- [ ] Font Assets (Pretendard Rounded) 실제 적용.
+- [ ] Splash Screen 디자인.
+- [x] Animations: PixelPet Breathing & ScaleTap Interaction 구현 완료.

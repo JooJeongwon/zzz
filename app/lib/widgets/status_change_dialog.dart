@@ -44,19 +44,20 @@ class _StatusChangeDialogState extends State<StatusChangeDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: ContinuousRectangleBorder(borderRadius: BorderRadius.circular(40)),
+      backgroundColor: AppColors.surfaceDay,
       child: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              '상태 변경',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            Text(
+              'Change Status',
+              style: Theme.of(context).textTheme.titleLarge,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             GridView.count(
               crossAxisCount: 2,
               shrinkWrap: true,
@@ -65,18 +66,18 @@ class _StatusChangeDialogState extends State<StatusChangeDialog> {
               childAspectRatio: 1.4,
               physics: const NeverScrollableScrollPhysics(),
               children: [
-                _buildStatusButton(UserStatus.ONLINE, Icons.sentiment_satisfied_alt, Colors.green),
-                _buildStatusButton(UserStatus.SLEEP, Icons.bedtime, Colors.indigo),
-                _buildStatusButton(UserStatus.STUDY, Icons.menu_book, Colors.orange),
-                _buildStatusButton(UserStatus.BUSY, Icons.work, Colors.red),
+                _buildStatusButton(UserStatus.ONLINE),
+                _buildStatusButton(UserStatus.SLEEP),
+                _buildStatusButton(UserStatus.STUDY),
+                _buildStatusButton(UserStatus.BUSY),
               ],
             ),
             
             if (_selectedStatus != UserStatus.ONLINE) ...[
               const SizedBox(height: 24),
-              const Text(
-                "지속 시간",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              Text(
+                "Duration",
+                style: Theme.of(context).textTheme.bodyLarge,
               ),
               const SizedBox(height: 12),
               Wrap(
@@ -94,10 +95,13 @@ class _StatusChangeDialogState extends State<StatusChangeDialog> {
                         });
                       }
                     },
-                    selectedColor: Colors.blue[100],
-                    backgroundColor: Colors.grey[100],
+                    selectedColor: _selectedStatus.color.withOpacity(0.2),
+                    backgroundColor: AppColors.backgroundDay,
+                    side: isSelected 
+                      ? BorderSide(color: _selectedStatus.color) 
+                      : const BorderSide(color: AppColors.borderDay),
                     labelStyle: TextStyle(
-                      color: isSelected ? Colors.blue[800] : Colors.black87,
+                      color: isSelected ? _selectedStatus.color : AppColors.textPrimaryDay,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                   );
@@ -105,13 +109,13 @@ class _StatusChangeDialogState extends State<StatusChangeDialog> {
               ),
             ],
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('취소', style: TextStyle(color: Colors.grey)),
+                  child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondaryDay)),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
@@ -120,10 +124,12 @@ class _StatusChangeDialogState extends State<StatusChangeDialog> {
                     Navigator.pop(context);
                   },
                   style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    backgroundColor: _selectedStatus.color,
+                    foregroundColor: Colors.white,
+                    shape: ContinuousRectangleBorder(borderRadius: BorderRadius.circular(24)), // Squircle button too
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   ),
-                  child: const Text('변경하기'),
+                  child: const Text('Update'),
                 ),
               ],
             ),
@@ -133,47 +139,45 @@ class _StatusChangeDialogState extends State<StatusChangeDialog> {
     );
   }
 
-  Widget _buildStatusButton(UserStatus status, IconData icon, Color color) {
+  Widget _buildStatusButton(UserStatus status) {
     final isSelected = status == _selectedStatus;
+    final color = status.color;
+
     return InkWell(
       onTap: () {
         setState(() {
           _selectedStatus = status;
-          // Reset duration if switching to ONLINE (though hidden, good to be clean)
           if (status == UserStatus.ONLINE) {
             _selectedDuration = null;
           }
         });
       },
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(20),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.15) : Colors.grey[50],
-          border: Border.all(
-            color: isSelected ? color : Colors.transparent,
-            width: 2.5,
-          ),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: isSelected ? [
-            BoxShadow(
-              color: color.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            )
-          ] : [],
+          color: isSelected ? color : Colors.white,
+          border: isSelected 
+              ? null
+              : Border.all(color: AppColors.borderDay, width: 1.5),
+          borderRadius: BorderRadius.circular(20),
+          // No shadow
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 36, color: color),
+            Icon(
+              status.icon, 
+              size: 32, 
+              color: isSelected ? Colors.white : color
+            ),
             const SizedBox(height: 8),
             Text(
               status.label,
               style: TextStyle(
-                color: color,
+                color: isSelected ? Colors.white : AppColors.textPrimaryDay,
                 fontWeight: FontWeight.bold,
-                fontSize: 15,
+                fontSize: 16,
               ),
             ),
           ],

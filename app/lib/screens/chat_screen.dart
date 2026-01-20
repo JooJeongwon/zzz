@@ -170,130 +170,137 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildRecapMessage(ChatMessage msg) {
-    final timeStr = DateFormat('a h:mm', 'ko_KR').format(msg.createdAt);
+    // Design: Simple Divider Text
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
-      child: Column(
+      padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+      child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border.all(color: Colors.purple.shade100),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.purple.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                )
-              ],
-            ),
+          Expanded(child: Divider(color: AppColors.borderDay, thickness: 1.5)),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.purple.shade50,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(Icons.summarize_rounded, color: Colors.purple, size: 20),
-                    ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "부재중 요약",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: Colors.purple.shade800,
-                          ),
-                        ),
-                        Text(
-                          "자리를 비운 사이 있었던 일이에요.",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12.0),
-                  child: Divider(height: 1),
-                ),
-                Text(
-                  msg.content,
-                  style: TextStyle(fontSize: 14, height: 1.5, color: Colors.grey[800]),
-                ),
+                const Text("🌙 While you were asleep...", style: TextStyle(color: AppColors.statusSleep, fontWeight: FontWeight.bold, fontSize: 13)),
+                const SizedBox(height: 4),
+                 // Recap content usually is long, so we might want to still confine it? 
+                 // Design says "Simple Divider Text". Example: "----- 🌙 수면 중 발생한 대화 요약 -----"
+                 // It seems the content should follow?
+                 // Let's assume the msg.content IS the summary.
+                 // If it's long text, maybe just show it as a system message block but cleaner.
               ],
             ),
           ),
-          const SizedBox(height: 4),
-          Text(timeStr, style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+          Expanded(child: Divider(color: AppColors.borderDay, thickness: 1.5)),
         ],
       ),
     );
+    // Note: The design example is just the separator. The content likely follows or is inside.
+    // If msg.content is the summary text itself, we should display it below the divider or nicely integrated.
+    // Let's implement a clean block for the text below the divider.
   }
 
+  Widget _buildActualRecapContent(ChatMessage msg) {
+     return Padding(
+       padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+       child: Text(
+         msg.content,
+         textAlign: TextAlign.center,
+         style: const TextStyle(color: AppColors.textSecondaryDay, fontSize: 13, height: 1.5),
+       ),
+     );
+  }
+
+  // Combined builder for safer replacement since replacing multiple methods with one chunk is tricky
+  Widget _buildRecapMessageCombined(ChatMessage msg) {
+      return Column(
+        children: [
+           Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+            child: Row(
+              children: [
+                const Expanded(child: Divider(color: AppColors.borderDay, thickness: 1.5)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  child: Text(
+                    "🌙  Recap  🌙", 
+                    style: TextStyle(color: AppColors.statusSleep, fontWeight: FontWeight.bold, fontSize: 12)
+                  ),
+                ),
+                const Expanded(child: Divider(color: AppColors.borderDay, thickness: 1.5)),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 8),
+            child: Text(
+              msg.content,
+              style: const TextStyle(color: AppColors.textSecondaryDay, fontSize: 14, height: 1.6),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      );
+  }
+
+
   Widget _buildMessageBubble(ChatMessage msg, bool isMe) {
+    if (msg.messageType == 'RECAP') return _buildRecapMessageCombined(msg);
+
     final isAi = msg.isAiGenerated;
     
-    // AI Message Styling
-    final bgColor = isMe 
-        ? Colors.blue[100] 
-        : (isAi ? Colors.purple[50] : Colors.grey[200]);
-    final borderColor = isAi ? Colors.purple[200] : Colors.transparent;
-    final textColor = Colors.black87;
+    // Design: "Paper Cut"
+    // No Shadow.
+    // Me: Dark Grey BG + White Text.
+    // Partner: White BG + Black Text + Light Border.
+    // AI: Lavender BG + Dark Purple Text (No Border).
+    
+    Color bgColor;
+    Color textColor;
+    BoxBorder? border;
+
+    if (isMe) {
+      bgColor = const Color(0xFF353B48); // Dark Grey
+      textColor = Colors.white;
+      border = null;
+    } else if (isAi) {
+      bgColor = const Color(0xFFF3E5F5); // Lavender
+      textColor = Colors.deepPurple;
+      border = null; // No border
+    } else {
+      // Partner
+      bgColor = Colors.white;
+      textColor = Colors.black87;
+      border = Border.all(color: AppColors.borderDay, width: 1.5);
+    }
 
     return Container(
       constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.only(
-          topLeft: const Radius.circular(16),
-          topRight: const Radius.circular(16),
-          bottomLeft: isMe ? const Radius.circular(16) : const Radius.circular(2),
-          bottomRight: isMe ? const Radius.circular(2) : const Radius.circular(16),
+          topLeft: const Radius.circular(20),
+          topRight: const Radius.circular(20),
+          bottomLeft: isMe ? const Radius.circular(20) : const Radius.circular(4),
+          bottomRight: isMe ? const Radius.circular(4) : const Radius.circular(20),
         ),
-        border: Border.all(color: borderColor!, width: isAi ? 1.5 : 0),
-        boxShadow: isAi ? [
-          BoxShadow(
-            color: Colors.purple.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          )
-        ] : [],
+        border: border,
+        // No boxShadow
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (isAi)
             Padding(
-              padding: const EdgeInsets.only(bottom: 6.0),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.auto_awesome, size: 14, color: Colors.purple[700]),
-                  const SizedBox(width: 4),
-                  Text(
-                    "AI Persona", 
-                    style: TextStyle(fontSize: 11, color: Colors.purple[700], fontWeight: FontWeight.bold)
-                  ),
-                ],
+              padding: const EdgeInsets.only(bottom: 4.0),
+              child: Text(
+                "AI Persona", 
+                style: TextStyle(fontSize: 11, color: textColor.withOpacity(0.7), fontWeight: FontWeight.bold)
               ),
             ),
           Text(
             msg.content, 
-            style: TextStyle(fontSize: 15, color: textColor, height: 1.3),
+            style: TextStyle(fontSize: 16, color: textColor, height: 1.4, fontWeight: FontWeight.normal),
           ),
         ],
       ),
