@@ -190,8 +190,8 @@ RabbitMQ 연동 부분은 통합 테스트(Integration Test)로 검증해야 합
 서비스의 실제 배포와 운영을 위한 마무리 작업입니다.
 
 A. 통합 테스트 환경 구축
-- [ ] Testcontainers를 도입하여 Redis, MySQL, RabbitMQ 연동 테스트 작성.
-- [ ] Core-AI 간의 메시지 큐 송수신 통합 테스트 작성.
+- [x] Testcontainers를 도입하여 Redis, MySQL, RabbitMQ 연동 테스트 작성.
+- [x] Core-AI 간의 메시지 큐 송수신 통합 테스트 작성.
 
 B. API 문서화
 - [ ] SpringDoc OpenAPI (Swagger) 적용.
@@ -230,22 +230,22 @@ D. Polish & Assets
 
 내용: 채팅 화면 코드에서 '일반 메시지'와 '요약(Recap)'을 처리하는 코드가 섞여 있어 복잡합니다.
 
-작업: chat_screen.dart에서 _buildMessageRow 함수 내 분기 처리를 명확하게 분리하여 코드 정리.
+작업: chat_screen.dart에서 _buildMessageRow 함수 내 분기 처리를 명확하게 분리하여 코드 정리. (완료)
 
 언어 통일 (Localization)
 
 내용: 코드 내에 한글('방금 전')과 영어('Connect with Partner')가 섞여 있어 사용자 경험을 해칩니다.
 
-작업: 앱 내 모든 텍스트를 한국어로 통일하고, 날짜 포맷도 intl 패키지를 활용해 한국식으로 변경.
+작업: 앱 내 모든 텍스트를 한국어로 통일하고, 날짜 포맷도 intl 패키지를 활용해 한국식으로 변경. (완료)
 
 네트워크 에러 처리 (Stability)
 
 내용: 인터넷이 끊기거나 서버 오류 시 앱이 멈춘 것처럼 보이지 않게 처리해야 합니다.
 
-작업: API 호출 실패 시 "재시도" 버튼을 띄우거나, 상단에 "오프라인 상태" 알림 바 표시.
+작업: API 호출 실패 시 "재시도" 버튼을 띄우거나, 상단에 "오프라인 상태" 알림 바 표시. (완료)
 
 다크 모드 자동화 (Logic)
 
 내용: 디자인 시스템에 있는 Night Mode 색상이 언제 적용될지 로직을 정해야 합니다.
 
-작업: 파트너가 SLEEP 상태가 되면 앱 전체 테마를 자동으로 어두운 색상(AppColors.backgroundNight)으로 전환하는 로직 구현.
+작업: 파트너가 SLEEP 상태가 되면 앱 전체 테마를 자동으로 어두운 색상(AppColors.backgroundNight)으로 전환하는 로직 구현. (완료)
