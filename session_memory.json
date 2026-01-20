@@ -1,16 +1,17 @@
 {
-  "last_task": "Optimize Android Battery Usage",
+  "last_task": "Refactor Chat Logic & Localize App",
   "technical_details": {
-    "module": "app/android/app/src/main/kotlin/com/zzz/app/service",
-    "class": "HeartbeatService",
+    "module": "app/lib/screens",
+    "files": ["chat_screen.dart", "connect_couple_screen.dart", "login_screen.dart", "signup_screen.dart", "status_change_dialog.dart"],
     "changes": [
-      "Implemented BroadcastReceiver for Screen On/Off events",
-      "Added adaptive heartbeat interval logic (10m when active, 20m when dozing)",
-      "Refactored heartbeat loop to allow immediate restart on screen on",
-      "Updated Task.md and ROADMAP.md"
+      "Refactored _buildMessageBubble in ChatScreen to use _getMessageStyle helper",
+      "Localized ConnectCoupleScreen, LoginScreen, SignupScreen, StatusChangeDialog to Korean",
+      "Updated Task.md"
     ]
   },
   "next_steps": [
+    "Network Error Handling (Offline UI)",
+    "Dark Mode Automation",
     "Security: API audit and encryption",
     "Deploy: AWS & CI/CD"
   ]

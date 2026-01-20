@@ -54,7 +54,7 @@ class _StatusChangeDialogState extends State<StatusChangeDialog> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Change Status',
+              '상태 변경',
               style: Theme.of(context).textTheme.titleLarge,
               textAlign: TextAlign.center,
             ),
@@ -77,7 +77,7 @@ class _StatusChangeDialogState extends State<StatusChangeDialog> {
             if (_selectedStatus != UserStatus.ONLINE) ...[
               const SizedBox(height: 24),
               Text(
-                "Duration",
+                "유지 시간",
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
               const SizedBox(height: 12),
@@ -116,7 +116,7 @@ class _StatusChangeDialogState extends State<StatusChangeDialog> {
               children: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondaryDay)),
+                  child: const Text('취소', style: TextStyle(color: AppColors.textSecondaryDay)),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
@@ -130,7 +130,7 @@ class _StatusChangeDialogState extends State<StatusChangeDialog> {
                     shape: ContinuousRectangleBorder(borderRadius: BorderRadius.circular(24)), // Squircle button too
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   ),
-                  child: const Text('Update'),
+                  child: const Text('변경'),
                 ),
               ],
             ),

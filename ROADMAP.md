@@ -46,6 +46,7 @@ AI 페르소나 기능을 위한 별도 서비스를 구축합니다.
 ## ✨ Phase 6: Polish & Beta (안정화 및 배포) - [Current Status: 80%]
 - [x] **Test:** 백엔드 테스트 환경 구축 (H2 DB, Test Config) 및 Context Load 검증.
 - [x] **Test:** 통합 테스트 및 시나리오 테스트 (User Lifecycle, Couple Connection 검증 완료).
+- [x] **Test:** Testcontainers 도입 및 통합 테스트 환경 구축.
 - [x] **Test:** AI 서비스 테스트 환경 구축 (Mock Mode 구현으로 API Key 없이 동작 검증).
 - [x] **Test:** 클라이언트(Flutter) 위젯 테스트 및 모델 유닛 테스트 완료.
 - [x] **Client (Native):** iOS Heartbeat 전송 로직 실제 구현 (Mock 제거).

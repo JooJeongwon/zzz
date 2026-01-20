@@ -37,4 +37,11 @@ class IntegrationEnvironmentTest extends IntegrationTestSupport {
         Object value = redisTemplate.opsForValue().get("test-key");
         assertThat(value).isEqualTo("test-value");
     }
+
+    @Test
+    void testRabbitMqConnection() {
+        assertThat(rabbitTemplate.getConnectionFactory()).isNotNull();
+        // Simple check to see if we can access the connection factory
+        System.out.println("RabbitMQ Host: " + rabbitTemplate.getConnectionFactory().getHost());
+    }
 }

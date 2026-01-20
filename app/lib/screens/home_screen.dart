@@ -6,6 +6,7 @@ import 'package:home_widget/home_widget.dart';
 import '../models/partner_status.dart';
 import '../models/user_status.dart';
 import '../services/api_service.dart';
+import '../theme/theme_controller.dart';
 import '../widgets/status_change_dialog.dart';
 import 'login_screen.dart';
 import 'connect_couple_screen.dart';
@@ -13,6 +14,7 @@ import 'chat_screen.dart';
 import '../widgets/design/clean_card.dart';
 import '../widgets/design/pixel_pet.dart';
 import '../theme/colors.dart';
+import '../widgets/design/loading_dots.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,6 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
   
   PartnerStatus? _partnerStatus;
   bool _isLoading = true;
+  bool _isConnectionError = false; // New state for error handling
   Timer? _timer;
   String _serviceStatusMessage = 'Service not started';
   UserStatus _myStatus = UserStatus.ONLINE;
@@ -64,26 +67,44 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _fetchPartnerStatus() async {
     try {
       final status = await ApiService.getPartnerStatus();
-      if (status == null && _partnerStatus == null) {
-        // First load failed
-      }
       
       if (mounted) {
         setState(() {
+          _isConnectionError = false;
           if (status != null) {
               _partnerStatus = status;
               _updateWidget(status);
+              
+              if (status.status == UserStatus.SLEEP) {
+                ThemeController.setDark();
+              } else {
+                ThemeController.setLight();
+              }
+          } else {
+            // Success but no partner (status is null)
+            _partnerStatus = null;
           }
         });
       }
     } catch (e) {
-      if (e.toString().contains('403')) {
-        _timer?.cancel();
-        if (mounted) {
+      if (mounted) {
+        if (e.toString().contains('403')) {
+          _timer?.cancel();
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('세션이 만료되었습니다. 다시 로그인해주세요.')),
           );
           _logout();
+        } else {
+          // If we have data, keep showing it but warn user.
+          // If we don't have data, show error screen.
+          if (_partnerStatus != null) {
+             // Optional: Show a subtle indicator or snackbar (throttled)
+             // debugPrint("Connection lost, using stale data");
+          } else {
+             setState(() {
+               _isConnectionError = true;
+             });
+          }
         }
       }
     } finally {
@@ -169,6 +190,30 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBody() {
+    if (_isConnectionError) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.wifi_off, size: 64, color: AppColors.textSecondaryDay),
+            const SizedBox(height: 16),
+            const Text(
+              '네트워크 연결 상태가 좋지 않습니다.',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () {
+                setState(() => _isLoading = true);
+                _fetchPartnerStatus();
+              },
+              child: const Text('다시 시도'),
+            ),
+          ],
+        ),
+      );
+    }
+
     if (_partnerStatus == null) {
       return Center(
         child: Column(
@@ -252,7 +297,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
-                      '마지막 활동: ${_formatTime(partner.lastActiveAt!)}',
+                      '마지막 활동:${_formatTime(partner.lastActiveAt!)}',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ),

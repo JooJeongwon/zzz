@@ -112,26 +112,21 @@ class ApiService {
   // --- Couple & Status APIs ---
 
   // Get Partner Status
-  // Returns PartnerStatus object if successful, null if error (or not couple)
+  // Returns PartnerStatus object if successful, null if no partner
+  // Throws Exception on error
   static Future<PartnerStatus?> getPartnerStatus() async {
-    try {
       final url = Uri.parse('$baseUrl/couples/partner-status');
       final headers = await _getAuthHeaders();
       final response = await http.get(url, headers: headers);
 
       if (response.statusCode == 200) {
+        if (response.body.isEmpty) return null;
         return PartnerStatus.fromJson(jsonDecode(utf8.decode(response.bodyBytes)));
       } else if (response.statusCode == 403) {
-        throw HttpException('403 Forbidden');
+        throw const HttpException('403 Forbidden');
       } else {
-        debugPrint("GetPartnerStatus Failed: ${response.statusCode} ${response.body}");
-        return null;
+        throw HttpException('Server Error: ${response.statusCode} ${response.body}');
       }
-    } catch (e) {
-      if (e.toString().contains('403 Forbidden')) rethrow;
-      debugPrint("GetPartnerStatus Error: $e");
-      return null;
-    }
   }
 
   // Update My Status

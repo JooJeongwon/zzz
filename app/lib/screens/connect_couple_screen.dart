@@ -59,7 +59,7 @@ class _ConnectCoupleScreenState extends State<ConnectCoupleScreen> with SingleTi
     } else {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to connect. Invalid code or error.')),
+        const SnackBar(content: Text('연결 실패. 코드를 확인해주세요.')),
       );
     }
   }
@@ -68,12 +68,12 @@ class _ConnectCoupleScreenState extends State<ConnectCoupleScreen> with SingleTi
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Connect with Partner'),
+        title: const Text('파트너 연결'),
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
-            Tab(text: 'My Code'),
-            Tab(text: 'Enter Code'),
+            Tab(text: '내 초대 코드'),
+            Tab(text: '코드 입력'),
           ],
         ),
       ),
@@ -86,7 +86,7 @@ class _ConnectCoupleScreenState extends State<ConnectCoupleScreen> with SingleTi
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (_inviteCode != null) ...[
-                  const Text('Your Invite Code', style: TextStyle(color: Colors.grey)),
+                  const Text('나의 초대 코드', style: TextStyle(color: Colors.grey)),
                   const SizedBox(height: 10),
                   Text(
                     _inviteCode!,
@@ -97,20 +97,20 @@ class _ConnectCoupleScreenState extends State<ConnectCoupleScreen> with SingleTi
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: _inviteCode!));
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Copied to clipboard')),
+                        const SnackBar(content: Text('클립보드에 복사되었습니다.')),
                       );
                     },
                     icon: const Icon(Icons.copy),
-                    label: const Text('Copy'),
+                    label: const Text('복사'),
                   ),
                 ] else
-                  const Text('Generate a code to invite your partner'),
+                  const Text('초대 코드를 생성하여 파트너에게 공유하세요'),
                 const SizedBox(height: 30),
                 _isGenerating
                     ? const CircularProgressIndicator()
                     : ElevatedButton(
                         onPressed: _generateCode,
-                        child: const Text('Generate Code'),
+                        child: const Text('코드 생성'),
                       ),
               ],
             ),
@@ -122,14 +122,14 @@ class _ConnectCoupleScreenState extends State<ConnectCoupleScreen> with SingleTi
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('Enter the code from your partner'),
+                const Text('파트너에게 받은 코드를 입력하세요'),
                 const SizedBox(height: 20),
                 TextField(
                   controller: _codeController,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
-                    labelText: 'Invite Code',
-                    hintText: 'e.g. A1B2C3',
+                    labelText: '초대 코드',
+                    hintText: '예: A1B2C3',
                   ),
                   textCapitalization: TextCapitalization.characters,
                   textAlign: TextAlign.center,
@@ -140,7 +140,7 @@ class _ConnectCoupleScreenState extends State<ConnectCoupleScreen> with SingleTi
                     ? const CircularProgressIndicator()
                     : ElevatedButton(
                         onPressed: _connect,
-                        child: const Text('Connect'),
+                        child: const Text('연결하기'),
                       ),
               ],
             ),

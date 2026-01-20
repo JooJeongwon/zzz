@@ -204,66 +204,76 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildMessageBubble(ChatMessage msg, bool isMe) {
-    final isAi = msg.isAiGenerated;
-    
-    // Design: "Paper Cut"
-    // No Shadow.
-    // Me: Dark Grey BG + White Text.
-    // Partner: White BG + Black Text + Light Border.
-    // AI: Lavender BG + Dark Purple Text (No Border).
-    
-    Color bgColor;
-    Color textColor;
-    BoxBorder? border;
-
-    if (isMe) {
-      bgColor = const Color(0xFF353B48); // Dark Grey
-      textColor = Colors.white;
-      border = null;
-    } else if (isAi) {
-      bgColor = const Color(0xFFF3E5F5); // Lavender
-      textColor = Colors.deepPurple;
-      border = null; // No border
-    } else {
-      // Partner
-      bgColor = Colors.white;
-      textColor = Colors.black87;
-      border = Border.all(color: AppColors.borderDay, width: 1.5);
-    }
+    final style = _getMessageStyle(msg, isMe);
 
     return Container(
       constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: bgColor,
+        color: style.bgColor,
         borderRadius: BorderRadius.only(
           topLeft: const Radius.circular(20),
           topRight: const Radius.circular(20),
           bottomLeft: isMe ? const Radius.circular(20) : const Radius.circular(4),
           bottomRight: isMe ? const Radius.circular(4) : const Radius.circular(20),
         ),
-        border: border,
+        border: style.border,
         // No boxShadow
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (isAi)
+          if (msg.isAiGenerated)
             Padding(
               padding: const EdgeInsets.only(bottom: 4.0),
               child: Text(
                 "AI 페르소나", // Localized
-                style: TextStyle(fontSize: 11, color: textColor.withOpacity(0.7), fontWeight: FontWeight.bold)
+                style: TextStyle(fontSize: 11, color: style.textColor.withOpacity(0.7), fontWeight: FontWeight.bold)
               ),
             ),
           Text(
             msg.content, 
-            style: TextStyle(fontSize: 16, color: textColor, height: 1.4, fontWeight: FontWeight.normal),
+            style: TextStyle(fontSize: 16, color: style.textColor, height: 1.4, fontWeight: FontWeight.normal),
           ),
         ],
       ),
     );
   }
+
+  _MessageStyle _getMessageStyle(ChatMessage msg, bool isMe) {
+    if (isMe) {
+      return _MessageStyle(
+        bgColor: const Color(0xFF353B48), // Dark Grey
+        textColor: Colors.white,
+        border: null,
+      );
+    } else if (msg.isAiGenerated) {
+      return _MessageStyle(
+        bgColor: const Color(0xFFF3E5F5), // Lavender
+        textColor: Colors.deepPurple,
+        border: null,
+      );
+    } else {
+      // Partner
+      return _MessageStyle(
+        bgColor: Colors.white,
+        textColor: Colors.black87,
+        border: Border.all(color: AppColors.borderDay, width: 1.5),
+      );
+    }
+  }
+
+class _MessageStyle {
+  final Color bgColor;
+  final Color textColor;
+  final BoxBorder? border;
+
+  _MessageStyle({
+    required this.bgColor,
+    required this.textColor,
+    this.border,
+  });
+}
 
   Widget _buildMessageInput() {
     return Container(
