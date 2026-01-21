@@ -1,18 +1,20 @@
 {
-  "last_task": "Refactor Chat Logic & Localize App",
+  "last_task": "Fix Mobile App Build (iOS/Android) & Full System Check",
   "technical_details": {
-    "module": "app/lib/screens",
-    "files": ["chat_screen.dart", "connect_couple_screen.dart", "login_screen.dart", "signup_screen.dart", "status_change_dialog.dart"],
+    "module": "app",
+    "files": [
+      "app/ios/Runner/AppDelegate.swift",
+      "app/android/app/src/main/kotlin/com/joo/zzz/app/**"
+    ],
     "changes": [
-      "Refactored _buildMessageBubble in ChatScreen to use _getMessageStyle helper",
-      "Localized ConnectCoupleScreen, LoginScreen, SignupScreen, StatusChangeDialog to Korean",
-      "Updated Task.md"
+      "iOS: Merged HeartbeatRepository & CoreDataStack into AppDelegate.swift to fix linking errors.",
+      "Android: Refactored Kotlin package from com.zzz.app to com.joo.zzz.app to match build.gradle namespace.",
+      "Verified builds: flutter build ios --no-codesign (Success), flutter build apk (Success)."
     ]
   },
   "next_steps": [
-    "Network Error Handling (Offline UI)",
-    "Dark Mode Automation",
-    "Security: API audit and encryption",
-    "Deploy: AWS & CI/CD"
+    "iOS: Add UIBackgroundModes to Info.plist for background heartbeat.",
+    "macOS: Implement Heartbeat logic (currently empty wrapper).",
+    "Test: Verify Heartbeat execution in background/doze modes on real devices."
   ]
 }

@@ -5,20 +5,23 @@ import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
 import com.zzz.core.domain.user.User;
 import com.zzz.core.domain.user.UserStatus;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 public class NotificationService {
 
     private static final Logger logger = LoggerFactory.getLogger(NotificationService.class);
     private final FirebaseMessaging firebaseMessaging;
+
+    public NotificationService(@Autowired(required = false) FirebaseMessaging firebaseMessaging) {
+        this.firebaseMessaging = firebaseMessaging;
+    }
 
     public void sendStatusChangeNotification(User sender, User receiver, UserStatus newStatus) {
         if (receiver.getFcmToken() == null) {

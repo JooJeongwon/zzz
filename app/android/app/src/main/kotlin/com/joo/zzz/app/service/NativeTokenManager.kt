@@ -1,4 +1,4 @@
-package com.zzz.app.service
+package com.joo.zzz.app.service
 
 import android.content.Context
 import android.content.SharedPreferences

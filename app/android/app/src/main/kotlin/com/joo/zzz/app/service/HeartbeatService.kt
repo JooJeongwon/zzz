@@ -1,4 +1,4 @@
-package com.zzz.app.service
+package com.joo.zzz.app.service
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -14,10 +14,10 @@ import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import com.zzz.app.data.db.AppDatabase
-import com.zzz.app.data.db.HeartbeatDao
-import com.zzz.app.data.db.HeartbeatEntity
-import com.zzz.app.network.HeartbeatClient
+import com.joo.zzz.app.data.db.AppDatabase
+import com.joo.zzz.app.data.db.HeartbeatDao
+import com.joo.zzz.app.data.db.HeartbeatEntity
+import com.joo.zzz.app.network.HeartbeatClient
 import kotlinx.coroutines.*
 
 class HeartbeatService : Service() {

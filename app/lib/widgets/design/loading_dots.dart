@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 import '../../theme/colors.dart';
 
 class LoadingDots extends StatefulWidget {
@@ -58,10 +59,10 @@ class _LoadingDotsState extends State<LoadingDots> with SingleTickerProviderStat
               // We want it to just jump up once per cycle?
               // Let's use standard sin wave for breathing feel.
               
-              final double shift = 6.0 * (-0.5 + 0.5 * (1.0 + (t * 6.28).sin())); // 0 to 6? No.
+              final double shift = 6.0 * (-0.5 + 0.5 * (1.0 + sin(t * 6.28))); // 0 to 6? No.
               // Simple: sin(2*pi * (t - delay))
               
-              final double value = (2 * 3.14159 * (t)).sin();
+              final double value = sin(2 * 3.14159 * t);
               final double dy = value < 0 ? 0 : -value * 6; // Only bounce up
 
               return Transform.translate(

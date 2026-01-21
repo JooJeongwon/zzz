@@ -45,7 +45,7 @@ class ApiService {
         }),
       );
 
-      return response.statusCode == 201;
+      return response.statusCode == 200 || response.statusCode == 201;
     } catch (e) {
       debugPrint("Register Error: $e");
       return false;

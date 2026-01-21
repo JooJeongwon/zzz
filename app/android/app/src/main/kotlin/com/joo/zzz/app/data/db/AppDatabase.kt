@@ -1,4 +1,4 @@
-package com.zzz.app.data.db
+package com.joo.zzz.app.data.db
 
 import android.content.Context
 import androidx.room.Database

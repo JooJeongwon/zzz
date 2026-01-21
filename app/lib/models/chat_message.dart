@@ -23,7 +23,7 @@ class ChatMessage {
       senderId: json['senderId'] as int,
       receiverId: json['receiverId'] as int,
       content: json['content'] as String,
-      isAiGenerated: json['isAiGenerated'] as bool? ?? false,
+      isAiGenerated: json['aiGenerated'] as bool? ?? false,
       messageType: json['messageType'] as String? ?? "TEXT",
       createdAt: DateTime.parse(json['createdAt'] as String),
     );

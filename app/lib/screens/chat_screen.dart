@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../models/chat_message.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
+import '../widgets/design/loading_dots.dart';
 
 class ChatScreen extends StatefulWidget {
   final int partnerId;
@@ -154,7 +155,7 @@ class _ChatScreenState extends State<ChatScreen> {
           padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
           child: Row(
             children: [
-              const Expanded(child: Divider(color: AppColors.borderDay, thickness: 1.5)),
+              Expanded(child: Divider(color: AppColors.borderDay, thickness: 1.5)),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12.0),
                 child: Text(
@@ -162,7 +163,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   style: TextStyle(color: AppColors.statusSleep, fontWeight: FontWeight.bold, fontSize: 12)
                 ),
               ),
-              const Expanded(child: Divider(color: AppColors.borderDay, thickness: 1.5)),
+              Expanded(child: Divider(color: AppColors.borderDay, thickness: 1.5)),
             ],
           ),
         ),
@@ -263,18 +264,6 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-class _MessageStyle {
-  final Color bgColor;
-  final Color textColor;
-  final BoxBorder? border;
-
-  _MessageStyle({
-    required this.bgColor,
-    required this.textColor,
-    this.border,
-  });
-}
-
   Widget _buildMessageInput() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
@@ -307,4 +296,16 @@ class _MessageStyle {
       ),
     );
   }
+}
+
+class _MessageStyle {
+  final Color bgColor;
+  final Color textColor;
+  final BoxBorder? border;
+
+  _MessageStyle({
+    required this.bgColor,
+    required this.textColor,
+    this.border,
+  });
 }

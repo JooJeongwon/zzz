@@ -2,17 +2,25 @@ import Flutter
 import UIKit
 import ActivityKit
 import WidgetKit
+import CoreData
+import BackgroundTasks
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
     
     private var currentActivity: Any? = nil
     private let heartbeatRepository = HeartbeatRepository()
+    private let heartbeatTaskId = "com.joo.zzz.heartbeat"
 
     override func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
+        
+        // Register Background Task
+        BGTaskScheduler.shared.register(forTaskWithIdentifier: heartbeatTaskId, using: nil) { task in
+            self.handleAppRefresh(task: task as! BGAppRefreshTask)
+        }
         
         let controller = window?.rootViewController as! FlutterViewController
         let channel = FlutterMethodChannel(name: "com.joo.zzz.app/heartbeat",
@@ -29,100 +37,13 @@ import WidgetKit
                     return
                 }
 
-                UIDevice.current.isBatteryMonitoringEnabled = true
-                let rawBattery = UIDevice.current.batteryLevel
-                let batteryLevel = rawBattery < 0 ? 100 : Int(rawBattery * 100)
-                let isScreenOn = true
-                let timestamp = Date().timeIntervalSince1970 * 1000 // ms
+                // Save credentials for background tasks
+                UserDefaults.standard.set(baseUrl, forKey: "heartbeat_base_url")
+                UserDefaults.standard.set(accessToken, forKey: "heartbeat_access_token")
 
-                let pendingLogs = self.heartbeatRepository.getAll()
-                let hasPending = !pendingLogs.isEmpty
-                
-                let targetUrl: URL?
-                var body: [String: Any] = [:]
-                
-                if hasPending {
-                    guard let url = URL(string: "\(baseUrl)/users/heartbeat/batch") else {
-                         result(FlutterError(code: "INVALID_URL", message: "Invalid URL", details: nil))
-                         return
-                    }
-                    targetUrl = url
-                    
-                    var heartbeats: [[String: Any]] = []
-                    for log in pendingLogs {
-                        heartbeats.append([
-                            "timestamp": log.value(forKey: "timestamp") as? Double ?? 0.0,
-                            "batteryLevel": log.value(forKey: "batteryLevel") as? Int ?? 0,
-                            "isScreenOn": log.value(forKey: "isScreenOn") as? Bool ?? false
-                        ])
-                    }
-                    // Add current
-                    heartbeats.append([
-                        "timestamp": timestamp,
-                        "batteryLevel": batteryLevel,
-                        "isScreenOn": isScreenOn
-                    ])
-                    
-                    body["heartbeats"] = heartbeats
-                } else {
-                    guard let url = URL(string: "\(baseUrl)/users/heartbeat") else {
-                         result(FlutterError(code: "INVALID_URL", message: "Invalid URL", details: nil))
-                         return
-                    }
-                    targetUrl = url
-                    body = [
-                        "batteryLevel": batteryLevel,
-                        "isScreenOn": isScreenOn,
-                        "timestamp": timestamp
-                    ]
+                self.performHeartbeat(baseUrl: baseUrl, accessToken: accessToken) { success, message in
+                    result(message)
                 }
-
-                guard let finalUrl = targetUrl else { return }
-
-                var request = URLRequest(url: finalUrl)
-                request.httpMethod = "POST"
-                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-                request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
-
-                do {
-                    request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
-                } catch {
-                    // If serialization fails, we can't send, so save current to DB
-                    self.heartbeatRepository.insert(timestamp: timestamp, batteryLevel: batteryLevel, isScreenOn: isScreenOn)
-                    result(FlutterError(code: "JSON_ERROR", message: "Failed to encode body", details: nil))
-                    return
-                }
-
-                print("Sending Heartbeat (Batch: \(hasPending)) to \(finalUrl.absoluteString)")
-
-                let task = URLSession.shared.dataTask(with: request) { data, response, error in
-                    if let error = error {
-                        print("Heartbeat Error: \(error.localizedDescription). Saving to DB.")
-                        self.heartbeatRepository.insert(timestamp: timestamp, batteryLevel: batteryLevel, isScreenOn: isScreenOn)
-                        // Return success to Flutter because we handled it offline
-                        result("Heartbeat Saved (Offline Mode)")
-                        return
-                    }
-
-                    if let httpResponse = response as? HTTPURLResponse {
-                        if (200...299).contains(httpResponse.statusCode) {
-                            if hasPending {
-                                self.heartbeatRepository.deleteAll()
-                                print("Batch sent successfully. Cleared logs.")
-                            }
-                            result("Heartbeat Sent (Batch: \(hasPending))")
-                        } else {
-                            print("Heartbeat Failed: Status \(httpResponse.statusCode). Saving to DB.")
-                            self.heartbeatRepository.insert(timestamp: timestamp, batteryLevel: batteryLevel, isScreenOn: isScreenOn)
-                             // Return success to Flutter because we handled it offline
-                            result("Heartbeat Saved (Server Error: \(httpResponse.statusCode))")
-                        }
-                    } else {
-                        self.heartbeatRepository.insert(timestamp: timestamp, batteryLevel: batteryLevel, isScreenOn: isScreenOn)
-                        result("Heartbeat Saved (No Response)")
-                    }
-                }
-                task.resume()
                 return
             }
 
@@ -141,6 +62,138 @@ import WidgetKit
         GeneratedPluginRegistrant.register(with: self)
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)
     }
+    
+    override func applicationDidEnterBackground(_ application: UIApplication) {
+        scheduleAppRefresh()
+    }
+    
+    // MARK: - Background Tasks
+    
+    private func scheduleAppRefresh() {
+        let request = BGAppRefreshTaskRequest(identifier: heartbeatTaskId)
+        request.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60) // 15 minutes later
+        
+        do {
+            try BGTaskScheduler.shared.submit(request)
+            print("Background Task Scheduled: \(heartbeatTaskId)")
+        } catch {
+            print("Could not schedule app refresh: \(error)")
+        }
+    }
+    
+    private func handleAppRefresh(task: BGAppRefreshTask) {
+        scheduleAppRefresh() // Schedule the next one
+        
+        task.expirationHandler = {
+            // Cancel operations if time runs out
+        }
+        
+        guard let baseUrl = UserDefaults.standard.string(forKey: "heartbeat_base_url"),
+              let accessToken = UserDefaults.standard.string(forKey: "heartbeat_access_token") else {
+            print("Missing credentials for background heartbeat")
+            task.setTaskCompleted(success: false)
+            return
+        }
+        
+        print("Executing background heartbeat...")
+        performHeartbeat(baseUrl: baseUrl, accessToken: accessToken) { success, msg in
+            print("Background heartbeat result: \(msg)")
+            task.setTaskCompleted(success: success)
+        }
+    }
+    
+    // MARK: - Heartbeat Logic
+    
+    private func performHeartbeat(baseUrl: String, accessToken: String, completion: @escaping (Bool, String) -> Void) {
+        UIDevice.current.isBatteryMonitoringEnabled = true
+        let rawBattery = UIDevice.current.batteryLevel
+        let batteryLevel = rawBattery < 0 ? 100 : Int(rawBattery * 100)
+        let isScreenOn = UIScreen.main.brightness > 0.0 // Approximation for background check
+        let timestamp = Date().timeIntervalSince1970 * 1000 // ms
+
+        let pendingLogs = self.heartbeatRepository.getAll()
+        let hasPending = !pendingLogs.isEmpty
+        
+        let targetUrl: URL?
+        var body: [String: Any] = [:]
+        
+        if hasPending {
+            guard let url = URL(string: "\(baseUrl)/users/heartbeat/batch") else {
+                 completion(false, "Invalid URL")
+                 return
+            }
+            targetUrl = url
+            
+            var heartbeats: [[String: Any]] = []
+            for log in pendingLogs {
+                heartbeats.append([
+                    "timestamp": log.value(forKey: "timestamp") as? Double ?? 0.0,
+                    "batteryLevel": log.value(forKey: "batteryLevel") as? Int ?? 0,
+                    "isScreenOn": log.value(forKey: "isScreenOn") as? Bool ?? false
+                ])
+            }
+            // Add current
+            heartbeats.append([
+                "timestamp": timestamp,
+                "batteryLevel": batteryLevel,
+                "isScreenOn": isScreenOn
+            ])
+            
+            body["heartbeats"] = heartbeats
+        } else {
+            guard let url = URL(string: "\(baseUrl)/users/heartbeat") else {
+                 completion(false, "Invalid URL")
+                 return
+            }
+            targetUrl = url
+            body = [
+                "batteryLevel": batteryLevel,
+                "isScreenOn": isScreenOn,
+                "timestamp": timestamp
+            ]
+        }
+
+        guard let finalUrl = targetUrl else { return }
+
+        var request = URLRequest(url: finalUrl)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
+        } catch {
+            self.heartbeatRepository.insert(timestamp: timestamp, batteryLevel: batteryLevel, isScreenOn: isScreenOn)
+            completion(false, "JSON Error")
+            return
+        }
+
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("Heartbeat Error: \(error.localizedDescription). Saving to DB.")
+                self.heartbeatRepository.insert(timestamp: timestamp, batteryLevel: batteryLevel, isScreenOn: isScreenOn)
+                completion(false, "Heartbeat Saved (Offline Mode)")
+                return
+            }
+
+            if let httpResponse = response as? HTTPURLResponse {
+                if (200...299).contains(httpResponse.statusCode) {
+                    if hasPending {
+                        self.heartbeatRepository.deleteAll()
+                    }
+                    completion(true, "Heartbeat Sent (Batch: \(hasPending))")
+                } else {
+                    self.heartbeatRepository.insert(timestamp: timestamp, batteryLevel: batteryLevel, isScreenOn: isScreenOn)
+                    completion(false, "Heartbeat Saved (Server Error: \(httpResponse.statusCode))")
+                }
+            } else {
+                self.heartbeatRepository.insert(timestamp: timestamp, batteryLevel: batteryLevel, isScreenOn: isScreenOn)
+                completion(false, "Heartbeat Saved (No Response)")
+            }
+        }
+        task.resume()
+    }
+
     
     @available(iOS 16.1, *)
     private func handleActivityMethodCall(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -239,6 +292,107 @@ import WidgetKit
             WidgetCenter.shared.reloadAllTimelines()
         } else {
             print("Error: Could not access App Group 'group.com.joo.zzz'. Make sure it's enabled in Xcode capabilities.")
+        }
+    }
+}
+
+// MARK: - CoreDataStack & HeartbeatRepository Merged
+// Merged here because these files were not correctly added to the Xcode project target, causing build failures.
+
+class CoreDataStack {
+    static let shared = CoreDataStack()
+
+    lazy var persistentContainer: NSPersistentContainer = {
+        let container = NSPersistentContainer(name: "HeartbeatModel", managedObjectModel: self.managedObjectModel)
+        container.loadPersistentStores { (storeDescription, error) in
+            if let error = error as NSError? {
+                fatalError("Unresolved error \(error), \(error.userInfo)")
+            }
+        }
+        return container
+    }()
+
+    // Programmatically define the model to avoid touching project.pbxproj
+    lazy var managedObjectModel: NSManagedObjectModel = {
+        let model = NSManagedObjectModel()
+        
+        let entity = NSEntityDescription()
+        entity.name = "HeartbeatLog"
+        entity.managedObjectClassName = NSStringFromClass(NSManagedObject.self)
+        
+        let timestampAttr = NSAttributeDescription()
+        timestampAttr.name = "timestamp"
+        timestampAttr.attributeType = .doubleAttributeType
+        timestampAttr.isOptional = false
+        
+        let batteryAttr = NSAttributeDescription()
+        batteryAttr.name = "batteryLevel"
+        batteryAttr.attributeType = .integer16AttributeType
+        batteryAttr.isOptional = false
+        
+        let screenAttr = NSAttributeDescription()
+        screenAttr.name = "isScreenOn"
+        screenAttr.attributeType = .booleanAttributeType
+        screenAttr.isOptional = false
+        
+        entity.properties = [timestampAttr, batteryAttr, screenAttr]
+        
+        model.entities = [entity]
+        return model
+    }()
+
+    var context: NSManagedObjectContext {
+        return persistentContainer.viewContext
+    }
+
+    func saveContext () {
+        let context = persistentContainer.viewContext
+        if context.hasChanges {
+            do {
+                try context.save()
+            } catch {
+                let nserror = error as NSError
+                print("CoreData Save Error: \(nserror), \(nserror.userInfo)")
+            }
+        }
+    }
+}
+
+class HeartbeatRepository {
+    private let context = CoreDataStack.shared.context
+
+    func insert(timestamp: Double, batteryLevel: Int, isScreenOn: Bool) {
+        let entity = NSEntityDescription.insertNewObject(forEntityName: "HeartbeatLog", into: context)
+        entity.setValue(timestamp, forKey: "timestamp")
+        entity.setValue(Int16(batteryLevel), forKey: "batteryLevel")
+        entity.setValue(isScreenOn, forKey: "isScreenOn")
+        
+        CoreDataStack.shared.saveContext()
+        print("Saved heartbeat to CoreData: \(timestamp)")
+    }
+
+    func getAll() -> [NSManagedObject] {
+        let fetchRequest = NSFetchRequest<NSManagedObject>(entityName: "HeartbeatLog")
+        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "timestamp", ascending: true)]
+        
+        do {
+            return try context.fetch(fetchRequest)
+        } catch {
+            print("Failed to fetch heartbeats: \(error)")
+            return []
+        }
+    }
+
+    func deleteAll() {
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "HeartbeatLog")
+        let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+        
+        do {
+            try context.execute(deleteRequest)
+            CoreDataStack.shared.saveContext()
+            print("Cleared all heartbeat logs from CoreData")
+        } catch {
+            print("Failed to delete heartbeats: \(error)")
         }
     }
 }

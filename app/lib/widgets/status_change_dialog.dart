@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/user_status.dart';
+import '../theme/colors.dart';
 
 class StatusChangeDialog extends StatefulWidget {
   final UserStatus currentStatus;
@@ -100,7 +101,7 @@ class _StatusChangeDialogState extends State<StatusChangeDialog> {
                     backgroundColor: AppColors.backgroundDay,
                     side: isSelected 
                       ? BorderSide(color: _selectedStatus.color) 
-                      : const BorderSide(color: AppColors.borderDay),
+                      : BorderSide(color: AppColors.borderDay),
                     labelStyle: TextStyle(
                       color: isSelected ? _selectedStatus.color : AppColors.textPrimaryDay,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,

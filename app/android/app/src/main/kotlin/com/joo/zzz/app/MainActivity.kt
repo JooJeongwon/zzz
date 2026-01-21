@@ -1,4 +1,4 @@
-package com.zzz.app
+package com.joo.zzz.app
 
 import android.content.Intent
 import android.os.Build
@@ -6,7 +6,7 @@ import androidx.annotation.NonNull
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
-import com.zzz.app.service.HeartbeatService
+import com.joo.zzz.app.service.HeartbeatService
 
 class MainActivity: FlutterActivity() {
     private val CHANNEL = "com.joo.zzz.app/heartbeat"

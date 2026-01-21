@@ -1,4 +1,4 @@
-package com.zzz.app
+package com.joo.zzz.app
 
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
