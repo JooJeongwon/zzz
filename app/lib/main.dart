@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/login_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/home_screen.dart';
@@ -16,7 +18,7 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() {
   runZonedGuarded(() {
-    runApp(const AppStarter());
+    runApp(const ProviderScope(child: AppStarter()));
   }, (error, stack) {
     debugPrint("ZZZ: Uncaught error in main zone: $error\n$stack");
   });
@@ -68,7 +70,8 @@ class _AppStarterState extends State<AppStarter> {
         debugPrint("ZZZ: Firebase init failed: $e");
       }
 
-      final token = await ApiService.getToken();
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('accessToken');
       debugPrint("ZZZ: Token retrieved: $token");
 
       if (mounted) {

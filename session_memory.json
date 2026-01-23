@@ -1,20 +1,20 @@
 {
-  "last_task": "Fix Mobile App Build (iOS/Android) & Full System Check",
+  "last_task": "Refactoring based on @Refactoring.md",
   "technical_details": {
-    "module": "app",
-    "files": [
-      "app/ios/Runner/AppDelegate.swift",
-      "app/android/app/src/main/kotlin/com/joo/zzz/app/**"
-    ],
+    "modules": ["app", "backend/core-service", "backend/ai-service"],
     "changes": [
-      "iOS: Merged HeartbeatRepository & CoreDataStack into AppDelegate.swift to fix linking errors.",
-      "Android: Refactored Kotlin package from com.zzz.app to com.joo.zzz.app to match build.gradle namespace.",
-      "Verified builds: flutter build ios --no-codesign (Success), flutter build apk (Success)."
+      "[App] Refactored ApiService to use Dio and Riverpod (Instance-based).",
+      "[App] Implemented MVVM architecture for HomeScreen using StateNotifier.",
+      "[App] Applied ConsumerStatefulWidget to all screens for Riverpod integration.",
+      "[App] Added Result<T> pattern for explicit error handling.",
+      "[Backend] Refactored ChatService to use Event-Driven Architecture (MessageSentEvent).",
+      "[Backend] Added Optimistic Locking (@Version) to User entity.",
+      "[AI] Refactored LLMService to use Dependency Injection pattern (Singleton Getter) and removed global instance."
     ]
   },
   "next_steps": [
-    "iOS: Add UIBackgroundModes to Info.plist for background heartbeat.",
-    "macOS: Implement Heartbeat logic (currently empty wrapper).",
-    "Test: Verify Heartbeat execution in background/doze modes on real devices."
+    "Run full integration tests to verify Event-Driven Chat flow.",
+    "Verify Optimistic Locking behavior under high concurrency.",
+    "Test Flutter App on real device to ensure Dio Interceptors work with SharedPreferences."
   ]
 }

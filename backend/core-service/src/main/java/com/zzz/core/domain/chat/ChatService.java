@@ -2,15 +2,14 @@ package com.zzz.core.domain.chat;
 
 import com.zzz.core.domain.ai.event.AIEventPublisher;
 import com.zzz.core.domain.ai.event.AIRequestEvent;
+import com.zzz.core.domain.chat.event.MessageSentEvent;
 import com.zzz.core.domain.user.User;
 import com.zzz.core.domain.user.UserRepository;
-import com.zzz.core.domain.user.UserStatus;
 import com.zzz.core.domain.couple.Couple;
 import com.zzz.core.domain.couple.CoupleRepository;
-import com.zzz.core.domain.notification.event.NotificationEvent;
-import com.zzz.core.domain.notification.event.NotificationEventPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -30,9 +29,9 @@ public class ChatService {
 
     private final ChatRepository chatRepository;
     private final UserRepository userRepository;
-    private final AIEventPublisher aiEventPublisher;
     private final CoupleRepository coupleRepository;
-    private final NotificationEventPublisher notificationEventPublisher;
+    private final AIEventPublisher aiEventPublisher;
+    private final ApplicationEventPublisher eventPublisher;
 
     public Page<ChatMessage> getChatHistory(Long userId, Long partnerId, Pageable pageable) {
         return chatRepository.findBySenderIdAndReceiverIdOrSenderIdAndReceiverIdOrderByCreatedAtDesc(
@@ -51,43 +50,19 @@ public class ChatService {
                 .build();
         chatRepository.save(userMessage);
 
-        // 2. Check Receiver Status & Trigger AI
+        // 2. Publish Event
         User receiver = userRepository.findById(receiverId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        User sender = userRepository.findById(senderId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
         
-        // Notify Receiver
-        publishChatNotification(sender.getId(), receiver.getId(), content);
+        eventPublisher.publishEvent(MessageSentEvent.builder()
+                .senderId(senderId)
+                .receiverId(receiverId)
+                .content(content)
+                .receiverStatus(receiver.getStatus())
+                .receiverNickname(receiver.getNickname())
+                .build());
 
-        if (isUserUnavailable(receiver.getStatus())) {
-            triggerAutoReply(receiver, sender, content);
-        }
-
-        return userMessage; // Return original message immediately
-    }
-
-    private boolean isUserUnavailable(UserStatus status) {
-        return status == UserStatus.SLEEP || status == UserStatus.STUDY || status == UserStatus.BUSY;
-    }
-
-    private void triggerAutoReply(User receiver, User sender, String userMessageContent) {
-        log.info("User {} is {}, publishing AI Chat request...", receiver.getId(), receiver.getStatus());
-        try {
-            AIRequestEvent event = AIRequestEvent.builder()
-                    .requestId(UUID.randomUUID().toString())
-                    .userId(String.valueOf(sender.getId())) // The one asking
-                    .partnerId(String.valueOf(receiver.getId())) // The one sleeping (AI Persona)
-                    .partnerName(receiver.getNickname())
-                    .content(userMessageContent)
-                    .type("CHAT")
-                    .build();
-            
-            aiEventPublisher.publishChatRequest(event);
-
-        } catch (Exception e) {
-            log.error("Failed to publish AI Chat request for User {}: {}", receiver.getId(), e.getMessage());
-        }
+        return userMessage;
     }
 
     @Async
@@ -135,16 +110,5 @@ public class ChatService {
         } catch (Exception e) {
             log.error("Failed to publish AI Recap request", e);
         }
-    }
-
-    private void publishChatNotification(Long senderId, Long receiverId, String content) {
-        NotificationEvent event = NotificationEvent.builder()
-                .type("CHAT")
-                .senderId(senderId)
-                .receiverId(receiverId)
-                .content(content)
-                .timestamp(System.currentTimeMillis())
-                .build();
-        notificationEventPublisher.publish(event);
     }
 }

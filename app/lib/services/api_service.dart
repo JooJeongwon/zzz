@@ -1,265 +1,201 @@
-import 'dart:convert';
-import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../core/result.dart';
 import '../models/partner_status.dart';
 import '../models/user_status.dart';
 import '../models/chat_message.dart';
 
 class ApiService {
-  // Android Emulator: 10.0.2.2, iOS Simulator/Web: localhost
-  static String get baseUrl {
-    // 1. Check .env first
-    final envUrl = dotenv.env['API_BASE_URL'];
-    if (envUrl != null && envUrl.isNotEmpty) {
-      return envUrl;
+  final Dio _dio;
+
+  ApiService(this._dio);
+
+  String get baseUrl => _dio.options.baseUrl;
+
+  // Helper to extract error message
+  String _handleError(DioException e) {
+    if (e.response != null) {
+      return "Server Error: ${e.response?.statusCode} ${e.response?.data}";
+    } else {
+      return "Network Error: ${e.message}";
     }
-
-    // 2. Fallback to smart defaults
-    if (kIsWeb) return 'http://localhost:8080/api/v1';
-    if (Platform.isAndroid) return 'http://10.0.2.2:8080/api/v1';
-    return 'http://Joo-MacBookAir.local:8080/api/v1';
-  }
-
-  static Future<Map<String, String>> _getAuthHeaders() async {
-    final token = await getToken();
-    return {
-      "Content-Type": "application/json",
-      if (token != null) "Authorization": "Bearer $token",
-    };
   }
 
   // Register
-  static Future<bool> register(String email, String password, String nickname) async {
+  Future<Result<bool>> register(String email, String password, String nickname) async {
     try {
-      final url = Uri.parse('$baseUrl/users/register');
-      final response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "email": email,
-          "password": password,
-          "nickname": nickname,
-        }),
-      );
-
-      return response.statusCode == 200 || response.statusCode == 201;
+      await _dio.post('/users/register', data: {
+        "email": email,
+        "password": password,
+        "nickname": nickname,
+      });
+      return const Success(true);
+    } on DioException catch (e) {
+      return Failure(_handleError(e), e);
     } catch (e) {
-      debugPrint("Register Error: $e");
-      return false;
+      return Failure(e.toString());
     }
   }
 
   // Login
-  static Future<bool> login(String email, String password) async {
+  Future<Result<bool>> login(String email, String password) async {
     try {
-      final url = Uri.parse('$baseUrl/users/login');
-      final response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "email": email,
-          "password": password,
-        }),
-      );
+      final response = await _dio.post('/users/login', data: {
+        "email": email,
+        "password": password,
+      });
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final accessToken = data['accessToken'];
-        final refreshToken = data['refreshToken'];
-        final userId = data['userId'];
+      final data = response.data;
+      final accessToken = data['accessToken'];
+      final refreshToken = data['refreshToken'];
+      final userId = data['userId'];
 
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('accessToken', accessToken);
-        if (refreshToken != null) {
-          await prefs.setString('refreshToken', refreshToken);
-        }
-        if (userId != null) {
-          await prefs.setInt('userId', userId);
-        }
-        return true;
-      }
-      return false;
+      final prefs = await SharedPreferences.getInstance();
+      if (accessToken != null) await prefs.setString('accessToken', accessToken);
+      if (refreshToken != null) await prefs.setString('refreshToken', refreshToken);
+      if (userId != null) await prefs.setInt('userId', userId);
+
+      return const Success(true);
+    } on DioException catch (e) {
+      return Failure(_handleError(e), e);
     } catch (e) {
-      debugPrint("Login Error: $e");
-      return false;
+      return Failure(e.toString());
     }
   }
-  
-  static Future<String?> getToken() async {
+
+  // Token Helpers
+  Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('accessToken');
   }
 
-  static Future<String?> getRefreshToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('refreshToken');
-  }
-
-  static Future<int?> getUserId() async {
+  Future<int?> getUserId() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt('userId');
   }
 
-  static Future<void> logout() async {
+  Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('accessToken');
     await prefs.remove('userId');
+    await prefs.remove('refreshToken');
   }
 
   // --- Couple & Status APIs ---
 
   // Get Partner Status
-  // Returns PartnerStatus object if successful, null if no partner
-  // Throws Exception on error
-  static Future<PartnerStatus?> getPartnerStatus() async {
-      final url = Uri.parse('$baseUrl/couples/partner-status');
-      final headers = await _getAuthHeaders();
-      final response = await http.get(url, headers: headers);
-
-      if (response.statusCode == 200) {
-        if (response.body.isEmpty) return null;
-        return PartnerStatus.fromJson(jsonDecode(utf8.decode(response.bodyBytes)));
-      } else if (response.statusCode == 403) {
-        throw const HttpException('403 Forbidden');
-      } else {
-        throw HttpException('Server Error: ${response.statusCode} ${response.body}');
+  Future<Result<PartnerStatus?>> getPartnerStatus() async {
+    try {
+      final response = await _dio.get('/couples/partner-status');
+      if (response.data == null || (response.data is String && response.data.isEmpty)) {
+        return const Success(null);
       }
+      return Success(PartnerStatus.fromJson(response.data));
+    } on DioException catch (e) {
+      // 403 handling specific logic could be checked here or in the caller
+      return Failure(_handleError(e), e);
+    } catch (e) {
+      return Failure(e.toString());
+    }
   }
 
   // Update My Status
-  static Future<bool> updateStatus(UserStatus status, {int? durationMinutes}) async {
+  Future<Result<bool>> updateStatus(UserStatus status, {int? durationMinutes}) async {
     try {
-      final url = Uri.parse('$baseUrl/users/status');
-      final headers = await _getAuthHeaders();
       final body = {
         "status": status.name,
         if (durationMinutes != null) "duration": durationMinutes,
       };
       
-      final response = await http.post(
-        url,
-        headers: headers,
-        body: jsonEncode(body),
-      );
-      return response.statusCode == 200;
+      await _dio.post('/users/status', data: body);
+      return const Success(true);
+    } on DioException catch (e) {
+      return Failure(_handleError(e), e);
     } catch (e) {
-      debugPrint("UpdateStatus Error: $e");
-      return false;
+      return Failure(e.toString());
     }
   }
 
   // Create Invite Code
-  static Future<CoupleInvite?> createInviteCode() async {
+  Future<Result<CoupleInvite?>> createInviteCode() async {
     try {
-      final url = Uri.parse('$baseUrl/couples/invite');
-      final headers = await _getAuthHeaders();
-      final response = await http.post(url, headers: headers);
-
-      if (response.statusCode == 200) {
-        return CoupleInvite.fromJson(jsonDecode(response.body));
-      }
-      return null;
+      final response = await _dio.post('/couples/invite');
+      return Success(CoupleInvite.fromJson(response.data));
+    } on DioException catch (e) {
+      return Failure(_handleError(e), e);
     } catch (e) {
-      debugPrint("CreateInviteCode Error: $e");
-      return null;
+      return Failure(e.toString());
     }
   }
 
   // Connect Couple
-  static Future<bool> connectCouple(String code) async {
+  Future<Result<bool>> connectCouple(String code) async {
     try {
-      final url = Uri.parse('$baseUrl/couples/connect');
-      final headers = await _getAuthHeaders();
-      final response = await http.post(
-        url,
-        headers: headers,
-        body: jsonEncode({"code": code}),
-      );
-      return response.statusCode == 200;
+      await _dio.post('/couples/connect', data: {"code": code});
+      return const Success(true);
+    } on DioException catch (e) {
+      return Failure(_handleError(e), e);
     } catch (e) {
-      debugPrint("ConnectCouple Error: $e");
-      return false;
+      return Failure(e.toString());
     }
   }
 
   // Disconnect Couple
-  static Future<bool> disconnectCouple() async {
+  Future<Result<bool>> disconnectCouple() async {
     try {
-      final url = Uri.parse('$baseUrl/couples/disconnect');
-      final headers = await _getAuthHeaders();
-      final response = await http.post(url, headers: headers);
-      return response.statusCode == 200;
+      await _dio.post('/couples/disconnect');
+      return const Success(true);
+    } on DioException catch (e) {
+      return Failure(_handleError(e), e);
     } catch (e) {
-      debugPrint("DisconnectCouple Error: $e");
-      return false;
+      return Failure(e.toString());
     }
   }
 
   // --- Chat APIs ---
 
-  static Future<List<ChatMessage>> getChatHistory(int partnerId, {int page = 0, int size = 20}) async {
+  Future<Result<List<ChatMessage>>> getChatHistory(int partnerId, {int page = 0, int size = 20}) async {
     try {
-      final url = Uri.parse('$baseUrl/chat/history?partnerId=$partnerId&page=$page&size=$size');
-      final headers = await _getAuthHeaders();
-      final response = await http.get(url, headers: headers);
+      final response = await _dio.get('/chat/history', queryParameters: {
+        'partnerId': partnerId,
+        'page': page,
+        'size': size,
+      });
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(utf8.decode(response.bodyBytes));
-        // Spring Page object structure: { content: [], pageable: ... }
-        final List<dynamic> content = data['content'];
-        return content.map((json) => ChatMessage.fromJson(json)).toList();
-      }
-      return [];
+      final List<dynamic> content = response.data['content'];
+      final list = content.map((json) => ChatMessage.fromJson(json)).toList();
+      return Success(list);
+    } on DioException catch (e) {
+      return Failure(_handleError(e), e);
     } catch (e) {
-      debugPrint("GetChatHistory Error: $e");
-      return [];
+      return Failure(e.toString());
     }
   }
 
-  static Future<ChatMessage?> sendMessage(int receiverId, String content) async {
+  Future<Result<ChatMessage?>> sendMessage(int receiverId, String content) async {
     try {
-      final url = Uri.parse('$baseUrl/chat/send');
-      final headers = await _getAuthHeaders();
-      final response = await http.post(
-        url,
-        headers: headers,
-        body: jsonEncode({
-          "receiverId": receiverId,
-          "content": content,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        return ChatMessage.fromJson(jsonDecode(utf8.decode(response.bodyBytes)));
-      }
-      return null;
+      final response = await _dio.post('/chat/send', data: {
+        "receiverId": receiverId,
+        "content": content,
+      });
+      return Success(ChatMessage.fromJson(response.data));
+    } on DioException catch (e) {
+      return Failure(_handleError(e), e);
     } catch (e) {
-      debugPrint("SendMessage Error: $e");
-      return null;
+      return Failure(e.toString());
     }
   }
 
   // Update FCM Token
-  static Future<bool> updateFcmToken(String token) async {
+  Future<Result<bool>> updateFcmToken(String token) async {
     try {
-      final url = Uri.parse('$baseUrl/users/fcm-token');
-      final headers = await _getAuthHeaders();
-      final body = {
-        "fcmToken": token,
-      };
-
-      final response = await http.post(
-        url,
-        headers: headers,
-        body: jsonEncode(body),
-      );
-      return response.statusCode == 200;
+      await _dio.post('/users/fcm-token', data: {"fcmToken": token});
+      return const Success(true);
+    } on DioException catch (e) {
+      return Failure(_handleError(e), e);
     } catch (e) {
-      debugPrint("UpdateFcmToken Error: $e");
-      return false;
+      return Failure(e.toString());
     }
   }
 }

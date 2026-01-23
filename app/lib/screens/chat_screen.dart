@@ -1,22 +1,24 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../providers/api_provider.dart';
+import '../core/result.dart';
 import '../models/chat_message.dart';
-import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../widgets/design/loading_dots.dart';
 
-class ChatScreen extends StatefulWidget {
+class ChatScreen extends ConsumerStatefulWidget {
   final int partnerId;
   final String partnerName;
 
   const ChatScreen({Key? key, required this.partnerId, required this.partnerName}) : super(key: key);
 
   @override
-  _ChatScreenState createState() => _ChatScreenState();
+  ConsumerState<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends ConsumerState<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   List<ChatMessage> _messages = [];
   Timer? _timer;
@@ -38,7 +40,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _loadUserId() async {
-    final userId = await ApiService.getUserId();
+    final userId = await ref.read(apiServiceProvider).getUserId();
     if (mounted) {
       setState(() {
         _myUserId = userId;
@@ -55,12 +57,15 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _fetchMessages() async {
     if (_myUserId == null) return;
-    final messages = await ApiService.getChatHistory(widget.partnerId);
+    final result = await ref.read(apiServiceProvider).getChatHistory(widget.partnerId);
+    
     if (mounted) {
-      setState(() {
-        _messages = messages; // Already sorted DESC from server
-        _isLoading = false;
-      });
+      if (result is Success<List<ChatMessage>>) {
+        setState(() {
+          _messages = result.data; // Already sorted DESC from server
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -69,7 +74,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final content = _controller.text;
     _controller.clear();
 
-    await ApiService.sendMessage(widget.partnerId, content);
+    await ref.read(apiServiceProvider).sendMessage(widget.partnerId, content);
     _fetchMessages();
   }
 

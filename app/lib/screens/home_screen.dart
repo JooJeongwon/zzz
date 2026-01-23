@@ -1,11 +1,7 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
-import 'package:home_widget/home_widget.dart';
-import '../models/partner_status.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../viewmodels/home_view_model.dart';
 import '../models/user_status.dart';
-import '../services/api_service.dart';
 import '../theme/theme_controller.dart';
 import '../widgets/status_change_dialog.dart';
 import 'login_screen.dart';
@@ -16,143 +12,17 @@ import '../widgets/design/pixel_pet.dart';
 import '../theme/colors.dart';
 import '../widgets/design/loading_dots.dart';
 import '../widgets/gamification/sync_totem_widget.dart';
+import 'package:intl/intl.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  static const platform = MethodChannel('com.joo.zzz.app/heartbeat');
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   
-  PartnerStatus? _partnerStatus;
-  bool _isLoading = true;
-  bool _isConnectionError = false; // New state for error handling
-  Timer? _timer;
-  String _serviceStatusMessage = 'Service not started';
-  UserStatus _myStatus = UserStatus.ONLINE;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchPartnerStatus();
-    // Poll every 10 seconds
-    _timer = Timer.periodic(const Duration(seconds: 10), (_) => _fetchPartnerStatus());
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _updateWidget(PartnerStatus partner) async {
-    try {
-      const groupId = 'group.com.joo.zzz';
-      await HomeWidget.setAppGroupId(groupId);
-      await HomeWidget.saveWidgetData<String>('title', partner.nickname);
-      await HomeWidget.saveWidgetData<String>('status', partner.status.label);
-      await HomeWidget.saveWidgetData<String>('updatedAt', _formatTime(DateTime.now()));
-      await HomeWidget.updateWidget(
-        name: 'StatusWidgetProvider',
-        androidName: 'StatusWidgetProvider',
-        iOSName: 'ZZZWidget',
-      );
-    } catch (e) {
-      debugPrint("Error updating widget: $e");
-    }
-  }
-
-  Future<void> _fetchPartnerStatus() async {
-    try {
-      final status = await ApiService.getPartnerStatus();
-      
-      if (mounted) {
-        setState(() {
-          _isConnectionError = false;
-          if (status != null) {
-              _partnerStatus = status;
-              _updateWidget(status);
-              
-              // Removed Auto Dark Mode per requirements
-          } else {
-            // Success but no partner (status is null)
-            _partnerStatus = null;
-          }
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        if (e.toString().contains('403')) {
-          _timer?.cancel();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('세션이 만료되었습니다. 다시 로그인해주세요.')),
-          );
-          _logout();
-        } else {
-          // If we have data, keep showing it but warn user.
-          // If we don't have data, show error screen.
-          if (_partnerStatus != null) {
-             // Optional: Show a subtle indicator or snackbar (throttled)
-             // debugPrint("Connection lost, using stale data");
-          } else {
-             setState(() {
-               _isConnectionError = true;
-             });
-          }
-        }
-      }
-    } finally {
-      if (mounted && _isLoading) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _updateMyStatus(UserStatus status, int? duration) async {
-    setState(() => _myStatus = status); // Optimistic update
-
-    final success = await ApiService.updateStatus(status, durationMinutes: duration);
-
-    if (!mounted) return;
-
-    if (!success) {
-       // Revert or show error
-       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('상태 변경에 실패했습니다.')));
-    }
-  }
-
-  Future<void> _startHeartbeatService() async {
-    String message;
-    try {
-      final userId = await ApiService.getUserId();
-      final token = await ApiService.getToken();
-      
-      if (userId == null || token == null) {
-        message = "Error: User ID or Token not found.";
-      }
-      else {
-        final String result = await platform.invokeMethod('startHeartbeat', {
-          'userId': userId,
-          'accessToken': token,
-          'baseUrl': ApiService.baseUrl,
-        });
-        message = 'Success: $result';
-      }
-    }
-    on PlatformException catch (e) {
-      message = "Failed to start service: '${e.message}'.";
-    }
-
-    setState(() {
-      _serviceStatusMessage = message;
-    });
-  }
-
   void _logout() async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -195,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (confirm != true) return;
 
-    await ApiService.logout();
+    await ref.read(homeViewModelProvider.notifier).logout();
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -204,12 +74,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(homeViewModelProvider);
+    final viewModel = ref.read(homeViewModelProvider.notifier);
+
+    // Listen to state changes for side effects
+    ref.listen(homeViewModelProvider, (previous, next) {
+      if (next.error == 'SESSION_EXPIRED') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('세션이 만료되었습니다. 다시 로그인해주세요.')),
+        );
+        _logout();
+      } else if (next.error != null && next.error != previous?.error && next.error != 'SESSION_EXPIRED') {
+         // Show other errors if needed, or handle in UI
+      }
+    });
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('ZZZ'),
         actions: [
           IconButton(icon: const Icon(Icons.link), onPressed: () {
-             Navigator.push(context, MaterialPageRoute(builder: (_) => ConnectCoupleScreen(isConnected: _partnerStatus != null)));
+             Navigator.push(context, MaterialPageRoute(builder: (_) => ConnectCoupleScreen(isConnected: state.partnerStatus != null)));
           }),
           IconButton(
             icon: Icon(Theme.of(context).brightness == Brightness.dark 
@@ -221,20 +106,20 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       body: SafeArea(
-        child: _isLoading 
+        child: state.isLoading 
         ? const Center(child: LoadingDots()) 
-        : _buildBody(),
+        : _buildBody(state, viewModel),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _startHeartbeatService,
+        onPressed: viewModel.startHeartbeatService,
         tooltip: 'Start Background Service',
         child: const Icon(Icons.favorite),
       ),
     );
   }
 
-  Widget _buildBody() {
-    if (_isConnectionError) {
+  Widget _buildBody(HomeState state, HomeViewModel viewModel) {
+    if (state.isConnectionError) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -248,8 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () {
-                setState(() => _isLoading = true);
-                _fetchPartnerStatus();
+                viewModel.fetchPartnerStatus();
               },
               child: const Text('다시 시도'),
             ),
@@ -258,7 +142,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    if (_partnerStatus == null) {
+    if (state.partnerStatus == null) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -297,7 +181,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    final partner = _partnerStatus!;
+    final partner = state.partnerStatus!;
     final color = partner.status.color;
 
     return Stack(
@@ -427,8 +311,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       showDialog(
                         context: context,
                         builder: (context) => StatusChangeDialog(
-                          currentStatus: _myStatus,
-                          onStatusSelected: _updateMyStatus,
+                          currentStatus: state.myStatus,
+                          onStatusSelected: viewModel.updateMyStatus,
                         ),
                       );
                    },
@@ -438,10 +322,10 @@ class _HomeScreenState extends State<HomeScreen> {
                        Container(
                          padding: const EdgeInsets.all(16),
                          decoration: BoxDecoration(
-                           color: _myStatus.color.withOpacity(0.1),
+                           color: state.myStatus.color.withOpacity(0.1),
                            shape: BoxShape.circle,
                          ),
-                         child: Icon(_myStatus.icon, color: _myStatus.color, size: 36),
+                         child: Icon(state.myStatus.icon, color: state.myStatus.color, size: 36),
                        ),
                        const SizedBox(width: 20),
                        Column(
@@ -450,9 +334,9 @@ class _HomeScreenState extends State<HomeScreen> {
                            Text('나의 상태', style: Theme.of(context).textTheme.bodySmall),
                            const SizedBox(height: 4),
                            Text(
-                             _myStatus.label,
+                             state.myStatus.label,
                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                               color: _myStatus.color
+                               color: state.myStatus.color
                              ),
                            ),
                          ],
@@ -467,10 +351,10 @@ class _HomeScreenState extends State<HomeScreen> {
                    "상태를 변경하려면 탭하세요",
                    style: TextStyle(color: AppColors.textSecondaryDay),
                  ),
-                 if (_serviceStatusMessage.isNotEmpty)
+                 if (state.serviceStatusMessage.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 20),
-                      child: Text(_serviceStatusMessage, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                      child: Text(state.serviceStatusMessage, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: Colors.grey)),
                     ),
                ],
              ),

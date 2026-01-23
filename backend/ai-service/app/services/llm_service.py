@@ -41,5 +41,10 @@ class LLMService:
         return self.provider.generate_dream_log(conversation_history, couple_names)
 
 
-# Singleton
-llm_service = LLMService()
+_instance: Optional[LLMService] = None
+
+def get_llm_service() -> LLMService:
+    global _instance
+    if _instance is None:
+        _instance = LLMService()
+    return _instance

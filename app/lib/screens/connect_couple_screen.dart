@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../services/api_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/api_provider.dart';
+import '../core/result.dart';
 import 'home_screen.dart';
 import '../widgets/design/clean_card.dart';
 import '../theme/colors.dart';
 
-class ConnectCoupleScreen extends StatefulWidget {
+class ConnectCoupleScreen extends ConsumerStatefulWidget {
   final bool isConnected;
 
   const ConnectCoupleScreen({super.key, this.isConnected = false});
 
   @override
-  State<ConnectCoupleScreen> createState() => _ConnectCoupleScreenState();
+  ConsumerState<ConnectCoupleScreen> createState() => _ConnectCoupleScreenState();
 }
 
-class _ConnectCoupleScreenState extends State<ConnectCoupleScreen> with SingleTickerProviderStateMixin {
+class _ConnectCoupleScreenState extends ConsumerState<ConnectCoupleScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   
   // Invite Tab
@@ -40,10 +42,19 @@ class _ConnectCoupleScreenState extends State<ConnectCoupleScreen> with SingleTi
 
   Future<void> _generateCode() async {
     setState(() => _isGenerating = true);
-    final invite = await ApiService.createInviteCode();
+    final result = await ref.read(apiServiceProvider).createInviteCode();
+    
+    if (!mounted) return;
+
     setState(() {
       _isGenerating = false;
-      _inviteCode = invite?.code;
+      if (result is Success) {
+        _inviteCode = (result as Success).data?.code;
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+           const SnackBar(content: Text('코드 생성 실패')),
+        );
+      }
     });
   }
 
@@ -55,19 +66,28 @@ class _ConnectCoupleScreenState extends State<ConnectCoupleScreen> with SingleTi
     if (code.isEmpty) return;
 
     setState(() => _isConnecting = true);
-    final success = await ApiService.connectCouple(code);
+    final result = await ref.read(apiServiceProvider).connectCouple(code);
+    
+    if (!mounted) return;
     setState(() => _isConnecting = false);
 
-    if (success) {
-      if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
-    } else {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('연결 실패. 코드를 확인해주세요.')),
-      );
+    switch (result) {
+      case Success(data: final success):
+        if (success) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('연결 실패. 코드를 확인해주세요.')),
+          );
+        }
+        break;
+      case Failure(message: final msg):
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('연결 오류: $msg')),
+        );
+        break;
     }
   }
 
@@ -114,22 +134,31 @@ class _ConnectCoupleScreenState extends State<ConnectCoupleScreen> with SingleTi
     if (confirm != true) return;
 
     setState(() => _isConnecting = true); // reuse loading state
-    final success = await ApiService.disconnectCouple();
+    final result = await ref.read(apiServiceProvider).disconnectCouple();
+    
+    if (!mounted) return;
     setState(() => _isConnecting = false);
 
-    if (success) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('연결이 해제되었습니다.')),
-      );
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
-    } else {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('연결 해제 실패. 다시 시도해주세요.')),
-      );
+    switch (result) {
+      case Success(data: final success):
+        if (success) {
+           ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('연결이 해제되었습니다.')),
+          );
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        } else {
+           ScaffoldMessenger.of(context).showSnackBar(
+             const SnackBar(content: Text('연결 해제 실패. 다시 시도해주세요.')),
+           );
+        }
+        break;
+      case Failure(message: final msg):
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('오류: $msg')),
+        );
+        break;
     }
   }
 

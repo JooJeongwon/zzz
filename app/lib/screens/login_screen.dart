@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/api_provider.dart';
+import '../core/result.dart';
 import 'signup_screen.dart';
 import 'home_screen.dart';
 import '../widgets/design/clean_card.dart';
 import '../theme/colors.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
@@ -38,7 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    final success = await ApiService.login(email, password);
+    final result = await ref.read(apiServiceProvider).login(email, password);
 
     if (!mounted) return;
 
@@ -46,14 +48,23 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = false;
     });
 
-    if (success) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('로그인 실패. 이메일과 비밀번호를 확인해주세요.')),
-      );
+    switch (result) {
+      case Success(data: final success):
+        if (success) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        } else {
+           ScaffoldMessenger.of(context).showSnackBar(
+             const SnackBar(content: Text('로그인 실패. 이메일과 비밀번호를 확인해주세요.')),
+           );
+        }
+        break;
+      case Failure(message: final msg):
+         ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('로그인 오류: $msg')),
+         );
+         break;
     }
   }
 

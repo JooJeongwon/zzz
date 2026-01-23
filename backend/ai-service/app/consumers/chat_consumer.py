@@ -3,7 +3,7 @@ import logging
 import aio_pika
 from app.core.rabbitmq import rabbitmq_client
 from app.services.rag_service import rag_service
-from app.services.llm_service import llm_service
+from app.services.llm_service import get_llm_service
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ async def process_recap_request(message: aio_pika.IncomingMessage):
             partner_id = body.get("partnerId")
             content = body.get("content")
             
-            response_text = llm_service.generate_recap(
+            response_text = get_llm_service().generate_recap(
                 conversation_history=content,
                 user_name="User" 
             )
@@ -99,11 +99,6 @@ async def process_dream_log_request(message: aio_pika.IncomingMessage):
 async def publish_response(payload: dict):
     channel = await rabbitmq_client.get_channel()
     exchange = await channel.get_exchange("ai.exchange", ensure=False) # Assumes exchange exists
-    
-    # If exchange doesn't exist, we might need to declare it, but usually producer declares it.
-    # For safety let's use the default exchange or declare it if we are the first ones.
-    # But usually Core service declares infrastructure.
-    # Let's assume 'ai.exchange' exists.
     
     await exchange.publish(
         aio_pika.Message(body=json.dumps(payload).encode()),

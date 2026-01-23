@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/api_provider.dart';
 import 'home_screen.dart';
 import 'login_screen.dart';
 import '../widgets/design/pixel_pet.dart';
 import '../models/user_status.dart';
 import '../theme/colors.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
@@ -24,8 +25,9 @@ class _SplashScreenState extends State<SplashScreen> {
     // Artificial delay for splash effect
     await Future.delayed(const Duration(seconds: 2));
 
-    final token = await ApiService.getToken();
-    final userId = await ApiService.getUserId();
+    final api = ref.read(apiServiceProvider);
+    final token = await api.getToken();
+    final userId = await api.getUserId();
 
     if (!mounted) return;
 

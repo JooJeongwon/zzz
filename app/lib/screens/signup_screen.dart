@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/api_provider.dart';
+import '../core/result.dart';
 import '../widgets/design/clean_card.dart';
 import '../theme/colors.dart';
 import 'home_screen.dart';
 
-class SignupScreen extends StatefulWidget {
+class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
 
   @override
-  State<SignupScreen> createState() => _SignupScreenState();
+  ConsumerState<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreen> {
+class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nicknameController = TextEditingController();
@@ -36,7 +38,7 @@ class _SignupScreenState extends State<SignupScreen> {
       _isLoading = true;
     });
 
-    final success = await ApiService.register(email, password, nickname);
+    final result = await ref.read(apiServiceProvider).register(email, password, nickname);
 
     if (!mounted) return;
 
@@ -44,22 +46,24 @@ class _SignupScreenState extends State<SignupScreen> {
       _isLoading = false;
     });
 
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('회원가입 성공! 로그인해주세요.')),
-      );
-      // Auto login or just pop?
-      // For now, let's just navigate to Home directly if API logs in (it usually saves token)
-      // But ApiService.signup might not save token.
-      // Let's assume we need to login or it returns true.
-      // If server returns token on signup, we can go to Home.
-      // Assuming signup doesn't auto-login in this API wrapper logic (checking ApiService is not visible but assuming standard).
-      // Let's just pop.
-      Navigator.of(context).pop(); 
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('회원가입 실패. 다시 시도해주세요.')),
-      );
+    switch (result) {
+      case Success(data: final success):
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('회원가입 성공! 로그인해주세요.')),
+          );
+          Navigator.of(context).pop(); 
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('회원가입 실패. 다시 시도해주세요.')),
+          );
+        }
+        break;
+      case Failure(message: final msg):
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('회원가입 오류: $msg')),
+        );
+        break;
     }
   }
 
