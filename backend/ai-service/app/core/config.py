@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     
     # OpenAI
-    OPENAI_API_KEY: str
+    OPENAI_API_KEY: Optional[str] = None
 
     # Gemini
     GEMINI_API_KEY: str
@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     GEMINI_EMBEDDING_MODEL: str = "models/embedding-001"
     
     # Vector DB (Pinecone)
-    PINECONE_API_KEY: str
+    PINECONE_API_KEY: Optional[str] = None
     PINECONE_ENV: str = "gcp-starter"
 
     # RabbitMQ

@@ -13,9 +13,11 @@ class FcmService {
   static final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   static final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
   static GlobalKey<NavigatorState>? _navigatorKey;
+  static ApiService? _apiService;
 
-  static Future<void> initialize(GlobalKey<NavigatorState> navigatorKey) async {
+  static Future<void> initialize(GlobalKey<NavigatorState> navigatorKey, ApiService apiService) async {
     _navigatorKey = navigatorKey;
+    _apiService = apiService;
 
     // 1. Request Permission
     NotificationSettings settings = await _firebaseMessaging.requestPermission(
@@ -76,13 +78,13 @@ class FcmService {
     String? token = await _firebaseMessaging.getToken();
     if (token != null) {
       debugPrint("FCM Token: $token");
-      await ApiService.updateFcmToken(token);
+      if (_apiService != null) await _apiService!.updateFcmToken(token);
     }
 
     // 7. Token Refresh Handler
     _firebaseMessaging.onTokenRefresh.listen((newToken) {
       debugPrint("FCM Token Refreshed: $newToken");
-      ApiService.updateFcmToken(newToken);
+      if (_apiService != null) _apiService!.updateFcmToken(newToken);
     });
   }
 

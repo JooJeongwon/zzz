@@ -9,6 +9,20 @@ from app.services.llm_service import get_llm_service
 
 logger = logging.getLogger(__name__)
 
+def sanitize_id(value) -> str:
+    """Ensure the ID is a string that can be parsed as a Long."""
+    try:
+        # Check if it's already a valid integer string
+        int(value)
+        return str(value)
+    except (ValueError, TypeError):
+        # specific fix for "partner-1" -> "1"
+        s_val = str(value)
+        digits = "".join(filter(str.isdigit, s_val))
+        if digits:
+            return digits
+        return "0" # Fallback
+
 async def run_blocking(func, *args, **kwargs):
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, functools.partial(func, *args, **kwargs))
@@ -20,8 +34,8 @@ async def process_chat_request(message: aio_pika.IncomingMessage):
             logger.info(f"Received chat request: {body}")
             
             request_id = body.get("requestId")
-            user_id = body.get("userId")
-            partner_id = body.get("partnerId")
+            user_id = sanitize_id(body.get("userId"))
+            partner_id = sanitize_id(body.get("partnerId"))
             partner_name = body.get("partnerName")
             content = body.get("content")
             
@@ -53,8 +67,8 @@ async def process_recap_request(message: aio_pika.IncomingMessage):
             logger.info(f"Received recap request: {body}")
             
             request_id = body.get("requestId")
-            user_id = body.get("userId")
-            partner_id = body.get("partnerId")
+            user_id = sanitize_id(body.get("userId"))
+            partner_id = sanitize_id(body.get("partnerId"))
             content = body.get("content")
             
             response_text = await run_blocking(
@@ -83,8 +97,8 @@ async def process_dream_log_request(message: aio_pika.IncomingMessage):
             logger.info(f"Received dream log request: {body}")
             
             request_id = body.get("requestId")
-            user_id = body.get("userId")
-            partner_id = body.get("partnerId")
+            user_id = sanitize_id(body.get("userId"))
+            partner_id = sanitize_id(body.get("partnerId"))
             content = body.get("content")
             
             response_text = await run_blocking(

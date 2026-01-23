@@ -10,6 +10,7 @@ import 'screens/splash_screen.dart';
 import 'screens/home_screen.dart';
 import 'services/api_service.dart';
 import 'services/fcm_service.dart';
+import 'providers/api_provider.dart';
 import 'firebase_options.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
@@ -24,14 +25,14 @@ void main() {
   });
 }
 
-class AppStarter extends StatefulWidget {
+class AppStarter extends ConsumerStatefulWidget {
   const AppStarter({super.key});
 
   @override
-  State<AppStarter> createState() => _AppStarterState();
+  ConsumerState<AppStarter> createState() => _AppStarterState();
 }
 
-class _AppStarterState extends State<AppStarter> {
+class _AppStarterState extends ConsumerState<AppStarter> {
   bool _isInitialized = false;
   bool _isLoggedIn = false;
   String? _error;
@@ -61,7 +62,8 @@ class _AppStarterState extends State<AppStarter> {
            await Firebase.initializeApp(
              options: DefaultFirebaseOptions.currentPlatform,
            );
-           await FcmService.initialize(navigatorKey);
+           final apiService = ref.read(apiServiceProvider);
+           await FcmService.initialize(navigatorKey, apiService);
            debugPrint("ZZZ: Firebase initialized");
         } else {
            debugPrint("ZZZ: Skipping Firebase init (placeholders detected)");

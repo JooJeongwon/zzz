@@ -12,12 +12,8 @@ final dioProvider = Provider<Dio>((ref) {
   final envUrl = dotenv.env['API_BASE_URL'];
   if (envUrl != null && envUrl.isNotEmpty) {
     baseUrl = envUrl;
-  } else if (kIsWeb) {
-    baseUrl = 'http://localhost:8080/api/v1';
-  } else if (Platform.isAndroid) {
-    baseUrl = 'http://10.0.2.2:8080/api/v1';
   } else {
-    baseUrl = 'http://Joo-MacBookAir.local:8080/api/v1'; // Fallback for iOS Simulator/Native
+    baseUrl = 'http://Joo-MacBookAir.local:8080/api/v1';
   }
 
   final dio = Dio(BaseOptions(

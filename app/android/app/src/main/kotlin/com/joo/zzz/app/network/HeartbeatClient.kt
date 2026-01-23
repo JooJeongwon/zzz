@@ -10,7 +10,7 @@ class HeartbeatClient {
 
     companion object {
         // TODO: Build Variant 또는 gradle.properties로 분리 권장
-        private const val API_BASE_URL = "http://10.0.2.2:8080"
+        private const val API_BASE_URL = "http://Joo-MacBookAir.local:8080"
     }
 
     fun sendHeartbeat(authToken: String?, batteryLevel: Int, isScreenOn: Boolean, timestamp: Long = System.currentTimeMillis()): Int {

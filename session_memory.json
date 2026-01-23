@@ -1,20 +1,9 @@
 {
-  "last_task": "Refactoring based on @Refactoring.md",
-  "technical_details": {
-    "modules": ["app", "backend/core-service", "backend/ai-service"],
-    "changes": [
-      "[App] Refactored ApiService to use Dio and Riverpod (Instance-based).",
-      "[App] Implemented MVVM architecture for HomeScreen using StateNotifier.",
-      "[App] Applied ConsumerStatefulWidget to all screens for Riverpod integration.",
-      "[App] Added Result<T> pattern for explicit error handling.",
-      "[Backend] Refactored ChatService to use Event-Driven Architecture (MessageSentEvent).",
-      "[Backend] Added Optimistic Locking (@Version) to User entity.",
-      "[AI] Refactored LLMService to use Dependency Injection pattern (Singleton Getter) and removed global instance."
-    ]
-  },
-  "next_steps": [
-    "Run full integration tests to verify Event-Driven Chat flow.",
-    "Verify Optimistic Locking behavior under high concurrency.",
-    "Test Flutter App on real device to ensure Dio Interceptors work with SharedPreferences."
-  ]
+  "last_task": "Flutter 코드의 Base URL을 개발용 주소(Joo-MacBookAir.local)로 변경",
+  "changed_files": [
+    "app/lib/providers/api_provider.dart",
+    "app/.env",
+    "app/android/app/src/main/kotlin/com/joo/zzz/app/network/HeartbeatClient.kt"
+  ],
+  "date": "2026-01-23"
 }

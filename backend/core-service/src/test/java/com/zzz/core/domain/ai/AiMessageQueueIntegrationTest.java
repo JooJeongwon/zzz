@@ -48,8 +48,8 @@ class AiMessageQueueIntegrationTest extends IntegrationTestSupport {
 
         AIRequestEvent event = AIRequestEvent.builder()
                 .requestId("req-123")
-                .userId("user-1")
-                .partnerId("partner-1")
+                .userId("100")
+                .partnerId("200")
                 .type("CHAT")
                 .content("Hello AI")
                 .build();

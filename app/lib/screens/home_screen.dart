@@ -366,7 +366,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
       ],
-    );
+    ),
+   ],
+  );
   }
 
   String _formatTime(DateTime time) {
