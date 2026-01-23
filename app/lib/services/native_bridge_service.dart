@@ -1,13 +1,19 @@
 import 'dart:io';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class NativeBridgeService {
+abstract class INativeBridgeService {
+  Future<void> startLiveActivity(String status, String message);
+  Future<void> updateLiveActivity(String status, String message);
+  Future<void> stopLiveActivity();
+  Future<String> startHeartbeat(String userId, String accessToken, String baseUrl);
+}
+
+class NativeBridgeService implements INativeBridgeService {
   static const MethodChannel _channel = MethodChannel('com.joo.zzz.app/heartbeat');
 
-  /// Starts the iOS Live Activity.
-  /// [status] - The current status (e.g., "SLEEP", "STUDY").
-  /// [message] - A short message to display.
-  static Future<void> startLiveActivity(String status, String message) async {
+  @override
+  Future<void> startLiveActivity(String status, String message) async {
     if (!Platform.isIOS) return;
     try {
       await _channel.invokeMethod('startLiveActivity', {
@@ -19,8 +25,8 @@ class NativeBridgeService {
     }
   }
 
-  /// Updates the existing iOS Live Activity.
-  static Future<void> updateLiveActivity(String status, String message) async {
+  @override
+  Future<void> updateLiveActivity(String status, String message) async {
     if (!Platform.isIOS) return;
     try {
       await _channel.invokeMethod('updateLiveActivity', {
@@ -32,8 +38,8 @@ class NativeBridgeService {
     }
   }
 
-  /// Ends the iOS Live Activity.
-  static Future<void> stopLiveActivity() async {
+  @override
+  Future<void> stopLiveActivity() async {
     if (!Platform.isIOS) return;
     try {
       await _channel.invokeMethod('stopLiveActivity');
@@ -41,4 +47,22 @@ class NativeBridgeService {
       print("Failed to stop Live Activity: '${e.message}'.");
     }
   }
+
+  @override
+  Future<String> startHeartbeat(String userId, String accessToken, String baseUrl) async {
+    try {
+      final String result = await _channel.invokeMethod('startHeartbeat', {
+        'userId': userId,
+        'accessToken': accessToken,
+        'baseUrl': baseUrl,
+      });
+      return 'Success: $result';
+    } on PlatformException catch (e) {
+      return "Failed to start service: '${e.message}'.";
+    }
+  }
 }
+
+final nativeBridgeServiceProvider = Provider<INativeBridgeService>((ref) {
+  return NativeBridgeService();
+});

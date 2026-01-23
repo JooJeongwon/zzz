@@ -1,11 +1,17 @@
 import json
 import logging
+import asyncio
+import functools
 import aio_pika
 from app.core.rabbitmq import rabbitmq_client
 from app.services.rag_service import rag_service
 from app.services.llm_service import get_llm_service
 
 logger = logging.getLogger(__name__)
+
+async def run_blocking(func, *args, **kwargs):
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, functools.partial(func, *args, **kwargs))
 
 async def process_chat_request(message: aio_pika.IncomingMessage):
     async with message.process():
@@ -19,7 +25,8 @@ async def process_chat_request(message: aio_pika.IncomingMessage):
             partner_name = body.get("partnerName")
             content = body.get("content")
             
-            response_text = rag_service.get_persona_response(
+            response_text = await run_blocking(
+                rag_service.get_persona_response,
                 target_persona_id=partner_id,
                 message=content,
                 partner_name=partner_name
@@ -50,9 +57,10 @@ async def process_recap_request(message: aio_pika.IncomingMessage):
             partner_id = body.get("partnerId")
             content = body.get("content")
             
-            response_text = get_llm_service().generate_recap(
+            response_text = await run_blocking(
+                get_llm_service().generate_recap,
                 conversation_history=content,
-                user_name="User" 
+                user_name="User"
             )
             
             response_payload = {
@@ -79,7 +87,8 @@ async def process_dream_log_request(message: aio_pika.IncomingMessage):
             partner_id = body.get("partnerId")
             content = body.get("content")
             
-            response_text = rag_service.generate_dream_log(
+            response_text = await run_blocking(
+                rag_service.generate_dream_log,
                 chat_history=content
             )
             

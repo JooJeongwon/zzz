@@ -1,18 +1,19 @@
 import 'dart:async';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:intl/intl.dart';
 import '../core/result.dart';
+import '../core/app_error.dart';
 import '../models/partner_status.dart';
 import '../models/user_status.dart';
 import '../providers/api_provider.dart';
+import '../services/native_bridge_service.dart';
 
 class HomeState {
   final bool isLoading;
   final PartnerStatus? partnerStatus;
   final UserStatus myStatus;
-  final String? error;
+  final AppError? error;
   final String serviceStatusMessage;
   final bool isConnectionError;
 
@@ -29,7 +30,7 @@ class HomeState {
     bool? isLoading,
     PartnerStatus? partnerStatus,
     UserStatus? myStatus,
-    String? error,
+    AppError? error,
     String? serviceStatusMessage,
     bool? isConnectionError,
   }) {
@@ -37,11 +38,7 @@ class HomeState {
       isLoading: isLoading ?? this.isLoading,
       partnerStatus: partnerStatus ?? this.partnerStatus,
       myStatus: myStatus ?? this.myStatus,
-      error: error, // Nullable update logic is tricky, here if passed it updates, if not it keeps. 
-                    // Actually usually we want to clear error. 
-                    // Let's assume if error is passed as null it remains null? 
-                    // No, for error clearing we might need explicit null.
-                    // For simplicity: new value overrides old.
+      error: error,
       serviceStatusMessage: serviceStatusMessage ?? this.serviceStatusMessage,
       isConnectionError: isConnectionError ?? this.isConnectionError,
     );
@@ -51,7 +48,6 @@ class HomeState {
 class HomeViewModel extends StateNotifier<HomeState> {
   final Ref ref;
   Timer? _timer;
-  static const platform = MethodChannel('com.joo.zzz.app/heartbeat');
 
   HomeViewModel(this.ref) : super(HomeState()) {
     _init();
@@ -86,15 +82,17 @@ class HomeViewModel extends StateNotifier<HomeState> {
         }
         break;
       case Failure(message: final msg, exception: final exc):
-        // Check for 403 or specific errors if needed
+        // Logging error (placeholder for Crashlytics)
+        print("Fetch Error: $msg"); 
+
         if (msg.contains('403')) {
            _timer?.cancel();
-           state = state.copyWith(error: 'SESSION_EXPIRED');
+           state = state.copyWith(error: const SessionExpiredError());
         } else {
-           // If we have data, we might want to keep showing it
            state = state.copyWith(
              isLoading: false,
-             isConnectionError: state.partnerStatus == null, // Only error if no data
+             isConnectionError: state.partnerStatus == null,
+             error: state.partnerStatus == null ? NetworkError(msg) : null,
            );
         }
         break;
@@ -102,38 +100,27 @@ class HomeViewModel extends StateNotifier<HomeState> {
   }
 
   Future<void> updateMyStatus(UserStatus status, int? duration) async {
-    // Optimistic update
     final oldStatus = state.myStatus;
     state = state.copyWith(myStatus: status);
 
     final result = await ref.read(apiServiceProvider).updateStatus(status, durationMinutes: duration);
 
     if (result is Failure) {
-      // Revert
-      state = state.copyWith(myStatus: oldStatus, error: 'UPDATE_FAILED');
+      state = state.copyWith(myStatus: oldStatus, error: const UpdateFailedError());
     }
   }
 
   Future<void> startHeartbeatService() async {
     String message;
-    try {
-      final api = ref.read(apiServiceProvider);
-      final userId = await api.getUserId();
-      final token = await api.getToken();
-      
-      if (userId == null || token == null) {
-        message = "Error: User ID or Token not found.";
-      }
-      else {
-        final String result = await platform.invokeMethod('startHeartbeat', {
-          'userId': userId,
-          'accessToken': token,
-          'baseUrl': api.baseUrl,
-        });
-        message = 'Success: $result';
-      }
-    } on PlatformException catch (e) {
-      message = "Failed to start service: '${e.message}'.";
+    final api = ref.read(apiServiceProvider);
+    final userId = await api.getUserId();
+    final token = await api.getToken();
+    
+    if (userId == null || token == null) {
+      message = "Error: User ID or Token not found.";
+    }
+    else {
+      message = await ref.read(nativeBridgeServiceProvider).startHeartbeat(userId.toString(), token, api.baseUrl);
     }
 
     state = state.copyWith(serviceStatusMessage: message);
@@ -156,8 +143,8 @@ class HomeViewModel extends StateNotifier<HomeState> {
         androidName: 'StatusWidgetProvider',
         iOSName: 'ZZZWidget',
       );
-    } catch (e) {
-      // Ignore widget update errors
+    } catch (e, stack) {
+      print("Widget Update Failed: $e\n$stack"); // Improved logging
     }
   }
 

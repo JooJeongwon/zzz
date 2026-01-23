@@ -17,15 +17,15 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     
     # OpenAI
-    OPENAI_API_KEY: str = "changeme"
+    OPENAI_API_KEY: str
 
     # Gemini
-    GEMINI_API_KEY: str = "changeme"
+    GEMINI_API_KEY: str
     GEMINI_MODEL_NAME: str = "gemini-1.5-flash"
     GEMINI_EMBEDDING_MODEL: str = "models/embedding-001"
     
     # Vector DB (Pinecone)
-    PINECONE_API_KEY: str = "changeme"
+    PINECONE_API_KEY: str
     PINECONE_ENV: str = "gcp-starter"
 
     # RabbitMQ

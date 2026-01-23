@@ -4,6 +4,7 @@ import '../viewmodels/home_view_model.dart';
 import '../models/user_status.dart';
 import '../theme/theme_controller.dart';
 import '../widgets/status_change_dialog.dart';
+import '../core/app_error.dart';
 import 'login_screen.dart';
 import 'connect_couple_screen.dart';
 import 'chat_screen.dart';
@@ -79,13 +80,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     // Listen to state changes for side effects
     ref.listen(homeViewModelProvider, (previous, next) {
-      if (next.error == 'SESSION_EXPIRED') {
+      if (next.error is SessionExpiredError) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('세션이 만료되었습니다. 다시 로그인해주세요.')),
         );
         _logout();
-      } else if (next.error != null && next.error != previous?.error && next.error != 'SESSION_EXPIRED') {
-         // Show other errors if needed, or handle in UI
+      } else if (next.error is UpdateFailedError) {
+         ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('상태 업데이트에 실패했습니다. 다시 시도해주세요.')),
+        );
+      } else if (next.error != null && next.error != previous?.error) {
+         // Handle other errors if needed
       }
     });
 
@@ -238,13 +243,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryLight.withOpacity(0.2),
+                      color: AppColors.statusOnline.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       "Lv. ${partner.coupleLevel}",
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: AppColors.primary,
+                        color: AppColors.statusOnline,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -271,7 +276,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.battery_std, size: 16, color: AppColors.textSecondaryDay),
+                        const Icon(Icons.battery_std, size: 16, color: AppColors.textSecondaryDay),
                         Text(
                           '${partner.batteryLevel}%',
                           style: Theme.of(context).textTheme.bodySmall,
