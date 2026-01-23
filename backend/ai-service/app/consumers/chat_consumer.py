@@ -68,6 +68,34 @@ async def process_recap_request(message: aio_pika.IncomingMessage):
         except Exception as e:
             logger.error(f"Error processing recap request: {e}")
 
+async def process_dream_log_request(message: aio_pika.IncomingMessage):
+    async with message.process():
+        try:
+            body = json.loads(message.body)
+            logger.info(f"Received dream log request: {body}")
+            
+            request_id = body.get("requestId")
+            user_id = body.get("userId")
+            partner_id = body.get("partnerId")
+            content = body.get("content")
+            
+            response_text = rag_service.generate_dream_log(
+                chat_history=content
+            )
+            
+            response_payload = {
+                "originalRequestId": request_id,
+                "userId": user_id,
+                "partnerId": partner_id,
+                "content": response_text,
+                "type": "DREAM_LOG"
+            }
+            
+            await publish_response(response_payload)
+            
+        except Exception as e:
+            logger.error(f"Error processing dream log request: {e}")
+
 async def publish_response(payload: dict):
     channel = await rabbitmq_client.get_channel()
     exchange = await channel.get_exchange("ai.exchange", ensure=False) # Assumes exchange exists
@@ -98,5 +126,10 @@ async def start_consumers():
     recap_queue = await channel.declare_queue("queue.ai.recap", durable=True)
     await recap_queue.bind(exchange, routing_key="ai.request.recap")
     await recap_queue.consume(process_recap_request)
+
+    # Dream Log Queue
+    dream_queue = await channel.declare_queue("queue.ai.dream", durable=True)
+    await dream_queue.bind(exchange, routing_key="ai.request.dream")
+    await dream_queue.consume(process_dream_log_request)
     
     logger.info("AI Service consumers started")

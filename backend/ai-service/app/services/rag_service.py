@@ -57,4 +57,12 @@ class RAGService:
         
         return response
 
+    def generate_dream_log(self, chat_history: str) -> str:
+        """
+        Generate a Dream Log story based on provided chat history.
+        This is triggered by Core Service when a couple wakes up.
+        """
+        logger.info("Generating Dream Log.")
+        return llm_service.generate_dream_log(chat_history)
+
 rag_service = RAGService()

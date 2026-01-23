@@ -35,6 +35,9 @@ public class User {
 
     private LocalDateTime lastActiveAt;
 
+    @Column(name = "decoration_type")
+    private String decorationType = "DEFAULT";
+
     private Long coupleId;
 
     @Builder
@@ -45,6 +48,7 @@ public class User {
         this.status = UserStatus.ONLINE;
         this.lastActiveAt = LocalDateTime.now();
         this.timezone = "Asia/Seoul";
+        this.decorationType = "DEFAULT";
     }
 
     public void updateTimezone(String timezone) {
@@ -59,6 +63,7 @@ public class User {
         UserStatus oldStatus = this.status;
         this.status = status;
         this.lastActiveAt = LocalDateTime.now();
+        updateDecorationType(status);
         return oldStatus;
     }
 
@@ -72,8 +77,23 @@ public class User {
         // Assuming ONLINE if heartbeat is received, though logic might be more complex later
         if (this.status == UserStatus.UNKNOWN || this.status == UserStatus.SLEEP) {
              this.status = UserStatus.ONLINE;
+             updateDecorationType(UserStatus.ONLINE);
         }
         return oldStatus;
+    }
+
+    private void updateDecorationType(UserStatus status) {
+        // Simple logic for MVP: Status determines decoration.
+        // In full version, this would be calculated by weekly stats.
+        switch (status) {
+            case STUDY -> this.decorationType = "STUDY_ROOM";
+            case BUSY -> this.decorationType = "OFFICE";
+            case SLEEP -> this.decorationType = "BEDROOM";
+            case ONLINE -> {
+                if (this.decorationType == null) this.decorationType = "DEFAULT";
+            }
+            default -> { /* Keep existing */ }
+        }
     }
 
     public void setCoupleId(Long coupleId) {

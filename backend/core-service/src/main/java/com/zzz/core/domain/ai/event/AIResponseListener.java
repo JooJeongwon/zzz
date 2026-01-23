@@ -30,12 +30,19 @@ public class AIResponseListener {
         Long senderId = Long.valueOf(event.getPartnerId());
         Long receiverId = Long.valueOf(event.getUserId());
 
+        String messageType = "TEXT";
+        if ("RECAP".equals(event.getType())) {
+            messageType = "RECAP";
+        } else if ("DREAM_LOG".equals(event.getType())) {
+            messageType = "DREAM_LOG";
+        }
+
         ChatMessage aiMessage = ChatMessage.builder()
                 .senderId(senderId)
                 .receiverId(receiverId)
                 .content(event.getContent())
                 .isAiGenerated(true)
-                .messageType("RECAP".equals(event.getType()) ? "RECAP" : "TEXT")
+                .messageType(messageType)
                 .createdAt(LocalDateTime.now())
                 .build();
         

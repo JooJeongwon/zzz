@@ -185,6 +185,19 @@ class ApiService {
     }
   }
 
+  // Disconnect Couple
+  static Future<bool> disconnectCouple() async {
+    try {
+      final url = Uri.parse('$baseUrl/couples/disconnect');
+      final headers = await _getAuthHeaders();
+      final response = await http.post(url, headers: headers);
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint("DisconnectCouple Error: $e");
+      return false;
+    }
+  }
+
   // --- Chat APIs ---
 
   static Future<List<ChatMessage>> getChatHistory(int partnerId, {int page = 0, int size = 20}) async {

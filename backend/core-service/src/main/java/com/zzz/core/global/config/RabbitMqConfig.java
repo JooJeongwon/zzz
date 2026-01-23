@@ -22,6 +22,7 @@ public class RabbitMqConfig {
     public static final String AI_RESPONSE_ROUTING_KEY = "ai.response";
     public static final String AI_REQUEST_CHAT_ROUTING_KEY = "ai.request.chat";
     public static final String AI_REQUEST_RECAP_ROUTING_KEY = "ai.request.recap";
+    public static final String AI_REQUEST_DREAM_ROUTING_KEY = "ai.request.dream";
 
     // DLQ Constants
     public static final String DLX_NAME = "zzz.dlx";

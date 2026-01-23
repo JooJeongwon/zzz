@@ -1,6 +1,7 @@
 package com.zzz.core.domain.user;
 
 import com.zzz.core.api.dto.HeartbeatRequest;
+import com.zzz.core.domain.gamification.GamificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,9 @@ class UserStatusServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private GamificationService gamificationService;
+
     private User user;
     private final Long USER_ID = 1L;
 
@@ -42,8 +46,6 @@ class UserStatusServiceTest {
                 .nickname("tester")
                 .password("password")
                 .build();
-        // Since ID is generated, we can't set it via builder.
-        // But for repo mocking, we assume repository returns this user.
     }
 
     @Test
@@ -69,8 +71,8 @@ class UserStatusServiceTest {
         // 2. DB Saved
         verify(userRepository).save(user);
         
-        // 3. Result verification (User status should update to ONLINE if it wasn't)
-        // Since default builder status is ONLINE, let's assume it returns valid status.
+        // 3. Gamification Triggered
+        verify(gamificationService).processStatusChange(eq(USER_ID), any(), any());
     }
 
     @Test
@@ -97,13 +99,17 @@ class UserStatusServiceTest {
         
         // 2. DB Saved (History is preserved)
         verify(userRepository).save(user);
+        
+        // 3. Gamification Triggered (Even for old data processing? Logic says yes)
+        verify(gamificationService).processStatusChange(eq(USER_ID), any(), any());
     }
 
     @Test
-    @DisplayName("updateStatus: 수동 변경 시 Redis에 즉시 반영된다")
-    void updateStatus_ShouldUpdateRedis() {
+    @DisplayName("updateStatus: 수동 변경 시 Redis와 DB에 반영된다")
+    void updateStatus_ShouldUpdateRedisAndDb() {
         // given
         UserStatus newStatus = UserStatus.STUDY;
+        given(userRepository.findById(USER_ID)).willReturn(Optional.of(user));
 
         // when
         userStatusService.updateStatus(USER_ID, newStatus);
@@ -111,5 +117,7 @@ class UserStatusServiceTest {
         // then
         verify(userStatusRepository).saveStatus(eq(USER_ID), eq(newStatus), any(Duration.class));
         verify(userStatusRepository).updateMetadataField(eq(USER_ID), eq("updatedAt"), anyString(), any(Duration.class));
+        verify(userRepository).save(user);
+        verify(gamificationService).processStatusChange(eq(USER_ID), any(), eq(newStatus));
     }
 }

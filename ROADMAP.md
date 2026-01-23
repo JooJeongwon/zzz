@@ -60,3 +60,12 @@ AI 페르소나 기능을 위한 별도 서비스를 구축합니다.
 - [ ] **Security:** API 보안 감사 및 데이터 암호화 적용.
 - [x] **Optimization:** 배터리 소모 최적화 (Android).
 - [ ] **Deploy:** AWS 배포 및 CI/CD 파이프라인 구축.
+
+## 🎮 Phase 7: Gamification (게이미피케이션) - [Current Status: 100%]
+사용자 몰입도 향상을 위한 게임 요소 구현 단계입니다.
+- [x] **Core:** Couple Entity 확장 (XP, Level 필드 추가).
+- [x] **Logic:** 상태 변경에 따른 XP 지급 로직 구현 (GamificationService).
+- [x] **UI:** PixelPet 레벨별 외형 변경 (Lv.10 Hat, Lv.30 Aura 구현).
+- [x] **Feature:** 동기화 토템 (Sync Totem) - 같은 상태 유지 시 보상.
+- [x] **Feature:** 꿈의 기록 (Dream Log) - 수면 중 대화 요약 AI 동화.
+- [x] **Feature:** 비트 월드 (Bit World) - 주간 활동 기반 룸 꾸미기.

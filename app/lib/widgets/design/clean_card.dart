@@ -18,11 +18,12 @@ class CleanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final decoration = BoxDecoration(
-      color: AppColors.surfaceDay,
+      color: isDark ? AppColors.surfaceNight : AppColors.surfaceDay,
       borderRadius: BorderRadius.circular(borderRadius),
       border: Border.all(
-        color: AppColors.borderDay,
+        color: isDark ? AppColors.borderNight : AppColors.borderDay,
         width: 1.5,
       ),
       // No shadow as per design principles

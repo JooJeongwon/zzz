@@ -7,4 +7,7 @@ import java.util.Optional;
 public interface CoupleRepository extends JpaRepository<Couple, Long> {
     @EntityGraph(attributePaths = {"userA", "userB"})
     Optional<Couple> findById(Long id);
+
+    @EntityGraph(attributePaths = {"userA", "userB"})
+    Optional<Couple> findByUserA_IdOrUserB_Id(Long userAId, Long userBId);
 }

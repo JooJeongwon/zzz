@@ -198,8 +198,30 @@ B. API 문서화
 - [x] 주요 API에 대한 설명 및 예제 값(@Schema) 추가.
 
 C. 배포 스크립트 작성
-- [ ] GitHub Actions (CI) 설정: 코드 푸시 시 자동 테스트 및 빌드.
+- [x] GitHub Actions (CI) 설정: 코드 푸시 시 자동 테스트 및 빌드.
 - [ ] Docker Compose Prod 설정: 로컬 개발용이 아닌 배포용 설정 파일(재시작 정책, 볼륨 백업 등) 분리.
+
+7. 🎮 Gamification Implementation
+재미 요소를 위한 기능 구현입니다.
+
+A. 러브 레벨 & 펫 진화
+- [x] Backend: Couple 엔티티에 xp, level 추가 및 레벨업 로직 구현.
+- [x] Backend: GamificationService 생성 및 상태 변경(기상/취침) 시 XP 지급 연동.
+- [x] API: PartnerStatusResponse에 coupleLevel, coupleXp 필드 추가.
+- [x] Client: PixelPet 위젯에 Level 파라미터 추가 및 Painter 로직 개선 (Lv.10 모자, Lv.30 Aura).
+- [x] Client: HomeScreen에 레벨 표시 UI 추가.
+
+B. 동기화 토템 (Sync Totem)
+- [x] Backend: 두 유저 상태 동기화 시작 시간 기록 로직.
+- [x] Client: 배경에 동기화 시간 시각화 위젯 구현.
+
+C. 꿈의 기록 (Dream Log)
+- [x] AI Service: 대화 로그 기반 동화 생성 Prompt 개발.
+- [x] Backend: 4시간 이상 동시 수면 시 AI 트리거 로직.
+
+D. 비트 월드 (Bit World)
+- [x] Backend: 주간 상태 통계 배치(Batch) 작업 (MVP: 상태 기반 실시간 반영).
+- [x] Client: 펫 배경(Room) 동적 렌더링.
 
 6. 🎨 Design Implementation (UI/UX)
 Design.md 기반의 앱 디자인 구현 작업입니다.
@@ -219,7 +241,7 @@ C. Screen Layout Implementation
 
 D. Polish & Assets
 - [x] Font Assets: Google Fonts (M PLUS Rounded 1c) 적용 완료.
-- [ ] Splash Screen 디자인.
+- [x] Splash Screen 디자인.
 - [x] Animations: PixelPet Breathing/Blink, ScaleTap, LoadingDots 구현 완료.
 
 ⚙️ 2. 앱 개발 및 로직 관련 사항 (Engineering & Logic)

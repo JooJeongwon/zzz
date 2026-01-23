@@ -1,9 +1,11 @@
 package com.zzz.core.domain.user;
 
 import com.zzz.core.api.dto.HeartbeatRequest;
+import com.zzz.core.domain.gamification.GamificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -19,6 +21,7 @@ public class UserStatusService {
 
     private final UserStatusRepository userStatusRepository;
     private final UserRepository userRepository;
+    private final GamificationService gamificationService;
 
     private static final long HEARTBEAT_TTL_MINUTES = 15; // 10분 주기 + 5분 여유
 
@@ -27,6 +30,7 @@ public class UserStatusService {
      * TTL을 갱신하여 Online 상태를 유지함.
      * 또한 RDB의 lastActiveAt을 갱신하여 스케줄러가 오판하지 않도록 함.
      */
+    @Transactional
     public UserStatus updateHeartbeat(Long userId, HeartbeatRequest request) {
         LocalDateTime timestamp = LocalDateTime.now();
         if (request != null && request.getTimestamp() != null) {
@@ -59,7 +63,12 @@ public class UserStatusService {
                 .map(user -> {
                     // DB에는 과거 데이터라도 기록 (히스토리성)
                     UserStatus oldStatus = user.updateHeartbeat(finalTimestamp);
+                    UserStatus newStatus = user.getStatus();
                     userRepository.save(user);
+
+                    // Gamification Trigger
+                    gamificationService.processStatusChange(userId, oldStatus, newStatus);
+                    
                     return oldStatus;
                 })
                 .orElse(UserStatus.UNKNOWN);
@@ -68,9 +77,19 @@ public class UserStatusService {
     /**
      * 사용자의 상태를 수동으로 변경하고 Redis에 즉시 반영.
      */
+    @Transactional
     public void updateStatus(Long userId, UserStatus status) {
+        // 1. Redis Update
         userStatusRepository.saveStatus(userId, status, Duration.ofMinutes(HEARTBEAT_TTL_MINUTES));
         userStatusRepository.updateMetadataField(userId, "updatedAt", LocalDateTime.now().toString(), Duration.ofMinutes(HEARTBEAT_TTL_MINUTES));
+
+        // 2. RDB Update & Gamification
+        userRepository.findById(userId).ifPresent(user -> {
+            UserStatus oldStatus = user.updateStatus(status);
+            userRepository.save(user);
+
+            gamificationService.processStatusChange(userId, oldStatus, status);
+        });
     }
 
     /**

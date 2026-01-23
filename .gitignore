@@ -80,3 +80,4 @@ DerivedData/
 # session_memory.json
 fix_build_phases.rb
 fix_xcode_project.rb
+*.hprof

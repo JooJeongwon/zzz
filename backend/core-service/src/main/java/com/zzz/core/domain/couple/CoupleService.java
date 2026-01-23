@@ -73,6 +73,10 @@ public class CoupleService {
                 .status(partner.getStatus()) // Or userStatusService.getUserStatus(partnerId) if real-time priority
                 .lastActiveAt(partner.getLastActiveAt())
                 .batteryLevel(battery)
+                .coupleLevel(couple.getLevel())
+                .coupleXp(couple.getXp())
+                .syncStartTime(couple.getSyncStartTime())
+                .decorationType(partner.getDecorationType())
                 .build();
     }
 

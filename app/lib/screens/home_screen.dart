@@ -15,6 +15,7 @@ import '../widgets/design/clean_card.dart';
 import '../widgets/design/pixel_pet.dart';
 import '../theme/colors.dart';
 import '../widgets/design/loading_dots.dart';
+import '../widgets/gamification/sync_totem_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -75,11 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
               _partnerStatus = status;
               _updateWidget(status);
               
-              if (status.status == UserStatus.SLEEP) {
-                ThemeController.setDark();
-              } else {
-                ThemeController.setLight();
-              }
+              // Removed Auto Dark Mode per requirements
           } else {
             // Success but no partner (status is null)
             _partnerStatus = null;
@@ -157,6 +154,47 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _logout() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => Dialog(
+        shape: ContinuousRectangleBorder(borderRadius: BorderRadius.circular(32)),
+        backgroundColor: Theme.of(context).canvasColor,
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text("로그아웃", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              const Text("정말 로그아웃 하시겠습니까?", textAlign: TextAlign.center),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                   TextButton(
+                     onPressed: () => Navigator.pop(context, false),
+                     child: const Text("취소", style: TextStyle(color: AppColors.textSecondaryDay)),
+                   ),
+                   const SizedBox(width: 8),
+                   ElevatedButton(
+                     onPressed: () => Navigator.pop(context, true),
+                     style: ElevatedButton.styleFrom(
+                       backgroundColor: AppColors.textPrimaryDay,
+                       foregroundColor: Colors.white,
+                       shape: ContinuousRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                     ),
+                     child: const Text("로그아웃"),
+                   ),
+                ],
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (confirm != true) return;
+
     await ApiService.logout();
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
@@ -171,8 +209,14 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('ZZZ'),
         actions: [
           IconButton(icon: const Icon(Icons.link), onPressed: () {
-             Navigator.push(context, MaterialPageRoute(builder: (_) => const ConnectCoupleScreen()));
+             Navigator.push(context, MaterialPageRoute(builder: (_) => ConnectCoupleScreen(isConnected: _partnerStatus != null)));
           }),
+          IconButton(
+            icon: Icon(Theme.of(context).brightness == Brightness.dark 
+              ? Icons.dark_mode 
+              : Icons.light_mode),
+            onPressed: ThemeController.toggleTheme,
+          ),
           IconButton(icon: const Icon(Icons.logout), onPressed: _logout),
         ],
       ),
@@ -256,52 +300,88 @@ class _HomeScreenState extends State<HomeScreen> {
     final partner = _partnerStatus!;
     final color = partner.status.color;
 
-    return Column(
+    return Stack(
       children: [
-        // Partner Area (Top 55%)
-        Expanded(
-          flex: 55,
-          child: Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceDay,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(32),
-                bottomRight: Radius.circular(32),
-              ),
-              border: Border.all(color: AppColors.borderDay, width: 1.5),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Pixel Pet
-                Hero(
-                  tag: 'partner_pet',
-                  child: PixelPet(status: partner.status, size: 180),
-                ),
-                const SizedBox(height: 24),
-                // Partner Info
-                Text(
-                  partner.nickname,
-                  style: Theme.of(context).textTheme.displayLarge,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  partner.status.label,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.bold,
+        // Background Layer: Sync Totem
+        SyncTotemWidget(
+          syncStartTime: partner.syncStartTime,
+          status: partner.status,
+        ),
+
+        // Foreground Layer: Content
+        Column(
+          children: [
+            // Partner Area (Top 55%)
+            Expanded(
+              flex: 55,
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface.withOpacity(0.85), // Semi-transparent
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(32),
+                    bottomRight: Radius.circular(32),
+                  ),
+                  border: Border.all(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.borderNight
+                        : AppColors.borderDay,
+                    width: 1.5,
                   ),
                 ),
-                if (partner.lastActiveAt != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      '마지막 활동:${_formatTime(partner.lastActiveAt!)}',
-                      style: Theme.of(context).textTheme.bodySmall,
+                child: SingleChildScrollView(
+                  child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 24),
+                  // Pixel Pet
+                  Hero(
+                    tag: 'partner_pet',
+                    child: PixelPet(
+                      status: partner.status, 
+                      size: 180,
+                      level: partner.coupleLevel,
+                      decorationType: partner.decorationType,
                     ),
                   ),
-                if (partner.batteryLevel != null)
+                  const SizedBox(height: 24),
+                  // Partner Info
+                  Text(
+                    partner.nickname,
+                    style: Theme.of(context).textTheme.displayLarge,
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryLight.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      "Lv. ${partner.coupleLevel}",
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    partner.status.label,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (partner.lastActiveAt != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        '마지막 활동:${_formatTime(partner.lastActiveAt!)}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  if (partner.batteryLevel != null)
                    Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Row(
@@ -316,18 +396,20 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
 
-                const SizedBox(height: 20),
-                ElevatedButton.icon(
-                  onPressed: () {
-                     Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(
-                       partnerId: partner.userId,
-                       partnerName: partner.nickname,
-                     )));
-                  },
-                  icon: const Icon(Icons.chat_bubble_outline, size: 20),
-                  label: const Text("채팅"),
-                ),
-              ],
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                       Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(
+                         partnerId: partner.userId,
+                         partnerName: partner.nickname,
+                       )));
+                    },
+                    icon: const Icon(Icons.chat_bubble_outline, size: 20),
+                    label: const Text("채팅"),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
             ),
           ),
         ),

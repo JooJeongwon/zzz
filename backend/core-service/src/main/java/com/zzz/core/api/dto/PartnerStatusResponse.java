@@ -25,4 +25,12 @@ public class PartnerStatusResponse {
     private LocalDateTime lastActiveAt;
     @Schema(description = "배터리 잔량", example = "85")
     private Integer batteryLevel; // Optional
+    @Schema(description = "커플 레벨", example = "5")
+    private Integer coupleLevel;
+    @Schema(description = "커플 현재 경험치", example = "50")
+    private Integer coupleXp;
+    @Schema(description = "동기화 시작 시간 (없으면 null)", example = "2024-01-20T12:00:00")
+    private LocalDateTime syncStartTime;
+    @Schema(description = "룸 꾸미기 타입", example = "STUDY_ROOM")
+    private String decorationType;
 }

@@ -6,6 +6,10 @@ class PartnerStatus {
   final UserStatus status;
   final DateTime? lastActiveAt;
   final int? batteryLevel;
+  final int coupleLevel;
+  final int coupleXp;
+  final DateTime? syncStartTime;
+  final String decorationType;
 
   PartnerStatus({
     required this.userId,
@@ -13,6 +17,10 @@ class PartnerStatus {
     required this.status,
     this.lastActiveAt,
     this.batteryLevel,
+    this.coupleLevel = 1,
+    this.coupleXp = 0,
+    this.syncStartTime,
+    this.decorationType = 'DEFAULT',
   });
 
   factory PartnerStatus.fromJson(Map<String, dynamic> json) {
@@ -24,6 +32,12 @@ class PartnerStatus {
           ? DateTime.tryParse(json['lastActiveAt']) 
           : null,
       batteryLevel: json['batteryLevel'],
+      coupleLevel: json['coupleLevel'] ?? 1,
+      coupleXp: json['coupleXp'] ?? 0,
+      syncStartTime: json['syncStartTime'] != null
+          ? DateTime.tryParse(json['syncStartTime'])
+          : null,
+      decorationType: json['decorationType'] ?? 'DEFAULT',
     );
   }
 }

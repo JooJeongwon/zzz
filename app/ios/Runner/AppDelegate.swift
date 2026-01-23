@@ -9,13 +9,14 @@ import BackgroundTasks
 @objc class AppDelegate: FlutterAppDelegate {
     
     private var currentActivity: Any? = nil
-    private let heartbeatRepository = HeartbeatRepository()
+    private lazy var heartbeatRepository = HeartbeatRepository()
     private let heartbeatTaskId = "com.joo.zzz.heartbeat"
 
     override func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
+        print("ZZZ: AppDelegate didFinishLaunchingWithOptions started")
         
         // Register Background Task
         BGTaskScheduler.shared.register(forTaskWithIdentifier: heartbeatTaskId, using: nil) { task in
@@ -306,7 +307,8 @@ class CoreDataStack {
         let container = NSPersistentContainer(name: "HeartbeatModel", managedObjectModel: self.managedObjectModel)
         container.loadPersistentStores { (storeDescription, error) in
             if let error = error as NSError? {
-                fatalError("Unresolved error \(error), \(error.userInfo)")
+                // fatalError("Unresolved error \(error), \(error.userInfo)")
+                print("ZZZ: CoreData Unresolved error \(error), \(error.userInfo)")
             }
         }
         return container

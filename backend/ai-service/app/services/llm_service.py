@@ -34,6 +34,12 @@ class LLMService:
         """
         return self.provider.generate_recap(conversation_history, user_name)
 
+    def generate_dream_log(self, conversation_history: str, couple_names: str = "두 사람") -> str:
+        """
+        Generate a dream log story based on conversation history.
+        """
+        return self.provider.generate_dream_log(conversation_history, couple_names)
+
 
 # Singleton
 llm_service = LLMService()

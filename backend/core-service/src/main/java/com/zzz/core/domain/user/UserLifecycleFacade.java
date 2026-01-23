@@ -73,21 +73,18 @@ public class UserLifecycleFacade {
     }
 
     private void notifyPartnerStatusChange(Long userId, UserStatus newStatus) {
-        User user = userRepository.findById(userId).orElseThrow();
-        if (user.getCoupleId() != null) {
-            coupleRepository.findById(user.getCoupleId()).ifPresent(couple -> {
-                Long partnerId = couple.getUserA().getId().equals(userId) ? couple.getUserB().getId() : couple.getUserA().getId();
-                
-                NotificationEvent event = NotificationEvent.builder()
-                        .type("STATUS_CHANGE")
-                        .senderId(userId)
-                        .receiverId(partnerId)
-                        .content(newStatus.name())
-                        .timestamp(System.currentTimeMillis())
-                        .build();
+        coupleRepository.findByUserA_IdOrUserB_Id(userId, userId).ifPresent(couple -> {
+            Long partnerId = couple.getUserA().getId().equals(userId) ? couple.getUserB().getId() : couple.getUserA().getId();
+            
+            NotificationEvent event = NotificationEvent.builder()
+                    .type("STATUS_CHANGE")
+                    .senderId(userId)
+                    .receiverId(partnerId)
+                    .content(newStatus.name())
+                    .timestamp(System.currentTimeMillis())
+                    .build();
 
-                notificationEventPublisher.publish(event);
-            });
-        }
+            notificationEventPublisher.publish(event);
+        });
     }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:app/models/user_status.dart';
+import 'package:app/theme/colors.dart';
 
 void main() {
   group('UserStatus Tests', () {
@@ -26,12 +27,12 @@ void main() {
     });
 
     test('UserStatus.color returns correct Color', () {
-      expect(UserStatus.ONLINE.color, Colors.green);
-      expect(UserStatus.SLEEP.color, Colors.indigo);
-      expect(UserStatus.BUSY.color, Colors.red);
-      // Colors.grey.shade300 is harder to match exactly with const, checking type or specific value if needed, 
-      // but simple equality usually works for Material colors.
-      expect(UserStatus.UNKNOWN.color, Colors.grey.shade300);
+      expect(UserStatus.ONLINE.color, AppColors.statusOnline);
+      expect(UserStatus.SLEEP.color, AppColors.statusSleep);
+      expect(UserStatus.STUDY.color, AppColors.statusStudy);
+      expect(UserStatus.BUSY.color, AppColors.statusBusy);
+      expect(UserStatus.DISCHARGED.color, const Color(0xFF718096)); // Manually matching UserStatus.dart implementation
+      expect(UserStatus.UNKNOWN.color, const Color(0xFFEEEEEE)); // Manually matching UserStatus.dart implementation
     });
   });
 }

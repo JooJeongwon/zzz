@@ -22,4 +22,9 @@ public class AIEventPublisher {
         log.info("Publishing AI Recap Request: {}", event.getRequestId());
         rabbitTemplate.convertAndSend(RabbitMqConfig.AI_EXCHANGE_NAME, RabbitMqConfig.AI_REQUEST_RECAP_ROUTING_KEY, event);
     }
+
+    public void publishDreamLogRequest(AIRequestEvent event) {
+        log.info("Publishing AI Dream Log Request: {}", event.getRequestId());
+        rabbitTemplate.convertAndSend(RabbitMqConfig.AI_EXCHANGE_NAME, RabbitMqConfig.AI_REQUEST_DREAM_ROUTING_KEY, event);
+    }
 }
