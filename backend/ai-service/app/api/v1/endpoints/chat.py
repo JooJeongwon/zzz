@@ -1,7 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from app.services.rag_service import rag_service
-from app.services.llm_service import llm_service
+from app.services.rag_service import RAGService, get_rag_service
+from app.services.llm_service import LLMService, get_llm_service
 
 router = APIRouter()
 
@@ -15,7 +15,10 @@ class ChatResponse(BaseModel):
     response: str
 
 @router.post("/generate", response_model=ChatResponse)
-async def generate_chat_response(request: ChatRequest):
+async def generate_chat_response(
+    request: ChatRequest,
+    rag_service: RAGService = Depends(get_rag_service)
+):
     """
     Generate a response from the AI Persona.
     """
@@ -33,7 +36,10 @@ async def generate_chat_response(request: ChatRequest):
     return ChatResponse(response=response_text)
 
 @router.post("/recap", response_model=ChatResponse)
-async def generate_recap(request: ChatRequest):
+async def generate_recap(
+    request: ChatRequest,
+    llm_service: LLMService = Depends(get_llm_service)
+):
     """
     Generate a recap summary of the conversation that happened while user was away.
     'message' field in request contains the formatted conversation history.

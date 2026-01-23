@@ -66,3 +66,6 @@ class RAGService:
         return llm_service.generate_dream_log(chat_history)
 
 rag_service = RAGService()
+
+def get_rag_service() -> RAGService:
+    return rag_service

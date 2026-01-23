@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from typing import List
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 # Current file: backend/ai-service/app/core/config.py
@@ -31,9 +31,10 @@ class Settings(BaseSettings):
     # RabbitMQ
     RABBITMQ_URL: str = "amqp://guest:guest@localhost:5672/"
     
-    class Config:
-        case_sensitive = True
-        env_file = str(BASE_DIR / ".env")
-        extra = "ignore" # Ignore extra fields in .env
+    model_config = SettingsConfigDict(
+        case_sensitive=True,
+        env_file=str(BASE_DIR / ".env"),
+        extra="ignore"
+    )
 
 settings = Settings()

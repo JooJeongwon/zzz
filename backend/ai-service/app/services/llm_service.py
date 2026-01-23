@@ -41,10 +41,7 @@ class LLMService:
         return self.provider.generate_dream_log(conversation_history, couple_names)
 
 
-_instance: Optional[LLMService] = None
+llm_service = LLMService()
 
 def get_llm_service() -> LLMService:
-    global _instance
-    if _instance is None:
-        _instance = LLMService()
-    return _instance
+    return llm_service
