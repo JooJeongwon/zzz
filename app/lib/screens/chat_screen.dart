@@ -6,6 +6,7 @@ import '../providers/api_provider.dart';
 import '../core/result.dart';
 import '../models/chat_message.dart';
 import '../theme/colors.dart';
+import '../theme/chat_theme.dart';
 import '../widgets/design/loading_dots.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
@@ -134,12 +135,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: Colors.grey[200],
+            color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[200],
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             DateFormat('yyyy년 MM월 dd일 EEEE', 'ko_KR').format(date),
-            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 12, color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[400] : Colors.grey[600]),
           ),
         ),
       ),
@@ -176,7 +177,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           padding: const EdgeInsets.fromLTRB(32, 0, 32, 24),
           child: Text(
             msg.content,
-            style: const TextStyle(color: AppColors.textSecondaryDay, fontSize: 13, height: 1.6),
+            style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? AppColors.textSecondaryNight : AppColors.textSecondaryDay, fontSize: 13, height: 1.6),
             textAlign: TextAlign.center,
           ),
         ),
@@ -247,57 +248,83 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   _MessageStyle _getMessageStyle(ChatMessage msg, bool isMe) {
+    final chatTheme = Theme.of(context).extension<ChatTheme>();
+    
+    // Fallback if theme extension is not found (shouldn't happen if setup correctly)
+    if (chatTheme == null) {
+      if (isMe) {
+         return _MessageStyle(bgColor: const Color(0xFF353B48), textColor: Colors.white, border: null);
+      } else {
+         return _MessageStyle(bgColor: Colors.white, textColor: Colors.black87, border: Border.all(color: Colors.grey));
+      }
+    }
+
     if (isMe) {
       return _MessageStyle(
-        bgColor: const Color(0xFF353B48), // Dark Grey
-        textColor: Colors.white,
+        bgColor: chatTheme.myBubbleColor,
+        textColor: chatTheme.myBubbleTextColor,
         border: null,
       );
     } else if (msg.isAiGenerated) {
       return _MessageStyle(
-        bgColor: const Color(0xFFF3E5F5), // Lavender
-        textColor: Colors.deepPurple,
+        bgColor: chatTheme.aiBubbleColor,
+        textColor: chatTheme.aiBubbleTextColor,
         border: null,
       );
     } else {
       // Partner
       return _MessageStyle(
-        bgColor: Colors.white,
-        textColor: Colors.black87,
-        border: Border.all(color: AppColors.borderDay, width: 1.5),
+        bgColor: chatTheme.partnerBubbleColor,
+        textColor: chatTheme.partnerBubbleTextColor,
+        border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
       );
     }
   }
 
   Widget _buildMessageInput() {
+    final chatTheme = Theme.of(context).extension<ChatTheme>();
+    final bgColor = chatTheme?.inputBackgroundColor ?? Colors.white;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-      color: Colors.white,
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              decoration: const InputDecoration(
-                hintText: "메시지 보내기...",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(24)),
+      padding: const EdgeInsets.only(left: 8.0, right: 8.0, top: 8.0, bottom: 20.0), // Added bottom padding
+      color: Theme.of(context).scaffoldBackgroundColor, 
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _controller,
+                style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+                decoration: InputDecoration(
+                  hintText: "메시지 보내기...",
+                  hintStyle: TextStyle(color: Theme.of(context).hintColor),
+                  filled: true,
+                  fillColor: bgColor,
+                  border: OutlineInputBorder(
+                    borderRadius: const BorderRadius.all(Radius.circular(24)),
+                    borderSide: BorderSide(color: Theme.of(context).dividerColor),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                     borderRadius: const BorderRadius.all(Radius.circular(24)),
+                     borderSide: BorderSide(color: Theme.of(context).dividerColor),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 ),
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                minLines: 1,
+                maxLines: 4,
               ),
-              minLines: 1,
-              maxLines: 4,
             ),
-          ),
-          const SizedBox(width: 8),
-          CircleAvatar(
-            backgroundColor: Colors.blue,
-            child: IconButton(
-              icon: const Icon(Icons.send, color: Colors.white, size: 20),
-              onPressed: _sendMessage,
+            const SizedBox(width: 8),
+            CircleAvatar(
+              backgroundColor: Theme.of(context).primaryColor,
+              child: IconButton(
+                icon: const Icon(Icons.send, color: Colors.white, size: 20),
+                onPressed: _sendMessage,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

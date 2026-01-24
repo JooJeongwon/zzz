@@ -205,9 +205,8 @@ class _ConnectCoupleScreenState extends ConsumerState<ConnectCoupleScreen> with 
 
   Widget _buildDisconnectView() {
     return Center(
-      child: CleanCard(
+      child: Padding(
         padding: const EdgeInsets.all(32),
-        borderRadius: 32,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

@@ -202,22 +202,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           children: [
             // Partner Area (Top 55%)
             Expanded(
-              flex: 55,
+              flex: 65,
               child: Container(
                 width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface.withOpacity(0.85), // Semi-transparent
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(32),
-                    bottomRight: Radius.circular(32),
-                  ),
-                  border: Border.all(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? AppColors.borderNight
-                        : AppColors.borderDay,
-                    width: 1.5,
-                  ),
-                ),
                 child: SingleChildScrollView(
                   child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -305,7 +292,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
         // My Area (Bottom 45%) - Floating Control
         Expanded(
-          flex: 45,
+          flex: 35,
           child: Container(
              padding: const EdgeInsets.all(24),
              child: Column(

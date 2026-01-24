@@ -2,11 +2,24 @@ import 'package:flutter/material.dart';
 import 'colors.dart';
 import 'text_styles.dart';
 
+import 'chat_theme.dart';
+
 class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
       scaffoldBackgroundColor: AppColors.backgroundDay,
+      extensions: const [
+        ChatTheme(
+          myBubbleColor: AppColors.myBubbleDay,
+          myBubbleTextColor: AppColors.myBubbleTextDay,
+          partnerBubbleColor: AppColors.partnerBubbleDay,
+          partnerBubbleTextColor: AppColors.partnerBubbleTextDay,
+          aiBubbleColor: AppColors.aiBubbleDay,
+          aiBubbleTextColor: AppColors.aiBubbleTextDay,
+          inputBackgroundColor: AppColors.inputBackgroundDay,
+        ),
+      ],
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.statusOnline,
         surface: AppColors.surfaceDay,
@@ -47,6 +60,17 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       scaffoldBackgroundColor: AppColors.backgroundNight,
+      extensions: const [
+        ChatTheme(
+          myBubbleColor: AppColors.myBubbleNight,
+          myBubbleTextColor: AppColors.myBubbleTextNight,
+          partnerBubbleColor: AppColors.partnerBubbleNight,
+          partnerBubbleTextColor: AppColors.partnerBubbleTextNight,
+          aiBubbleColor: AppColors.aiBubbleNight,
+          aiBubbleTextColor: AppColors.aiBubbleTextNight,
+          inputBackgroundColor: AppColors.inputBackgroundNight,
+        ),
+      ],
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.statusSleep,
         brightness: Brightness.dark,

@@ -41,7 +41,7 @@ public class User {
     private Long coupleId;
 
     @Version
-    private Long version;
+    private Long version = 0L;
 
     @Builder
     public User(String email, String nickname, String password) {
