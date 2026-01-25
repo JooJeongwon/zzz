@@ -24,6 +24,14 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(homeViewModelProvider.notifier).startHeartbeatService();
+    });
+  }
+
   void _logout() async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -189,91 +197,116 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final partner = state.partnerStatus!;
     final color = partner.status.color;
 
-    return Stack(
+    return Column(
       children: [
-        // Background Layer: Sync Totem
-        SyncTotemWidget(
-          syncStartTime: partner.syncStartTime,
-          status: partner.status,
-        ),
-
-        // Foreground Layer: Content
-        Column(
-          children: [
-            // Partner Area (Top 55%)
-            Expanded(
-              flex: 65,
-              child: Container(
-                width: double.infinity,
-                child: SingleChildScrollView(
-                  child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 24),
-                  // Pixel Pet
-                  Hero(
-                    tag: 'partner_pet',
-                    child: PixelPet(
-                      status: partner.status, 
-                      size: 180,
-                      level: partner.coupleLevel,
-                      decorationType: partner.decorationType,
-                    ),
+        // Partner Area (Top 55%)
+        Expanded(
+          flex: 55,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Spacer(flex: 2),
+                // Pixel Pet
+                Hero(
+                  tag: 'partner_pet',
+                  child: PixelPet(
+                    status: partner.status, 
+                    size: 160, // Slightly reduced size to save space
+                    level: partner.coupleLevel,
+                    decorationType: partner.decorationType,
                   ),
-                  const SizedBox(height: 24),
-                  // Partner Info
-                  Text(
-                    partner.nickname,
-                    style: Theme.of(context).textTheme.displayLarge,
+                ),
+                const Spacer(flex: 1),
+                
+                // Partner Info
+                Text(
+                  partner.nickname,
+                  style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 28),
+                ),
+                const SizedBox(height: 8),
+                
+                // Level Badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.statusOnline.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.statusOnline.withOpacity(0.3)),
                   ),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.statusOnline.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      "Lv. ${partner.coupleLevel}",
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: AppColors.statusOnline,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    partner.status.label,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: color,
+                  child: Text(
+                    "Lv. ${partner.coupleLevel}",
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: AppColors.statusOnline,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  if (partner.lastActiveAt != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(
-                        '마지막 활동:${_formatTime(partner.lastActiveAt!)}',
-                        style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 16),
+                
+                // Status & Sync Totem
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      partner.status.label,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  if (partner.batteryLevel != null)
-                   Padding(
-                    padding: const EdgeInsets.only(top: 8),
+                    if (partner.syncStartTime != null) ...[
+                      const SizedBox(width: 12),
+                      SyncTotemWidget(
+                        syncStartTime: partner.syncStartTime,
+                        status: partner.status,
+                      ),
+                    ],
+                  ],
+                ),
+
+                // Sub Info (Time, Battery)
+                if (partner.lastActiveAt != null || partner.batteryLevel != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.battery_std, size: 16, color: AppColors.textSecondaryDay),
-                        Text(
-                          '${partner.batteryLevel}%',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
+                        if (partner.lastActiveAt != null)
+                          Text(
+                            _formatTime(partner.lastActiveAt!),
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryDay),
+                          ),
+                        if (partner.lastActiveAt != null && partner.batteryLevel != null)
+                          const SizedBox(width: 12),
+                        if (partner.batteryLevel != null)
+                          Row(
+                            children: [
+                              Icon(
+                                partner.batteryLevel! > 20 ? Icons.battery_std : Icons.battery_alert, 
+                                size: 16, 
+                                color: partner.batteryLevel! > 20 ? AppColors.textSecondaryDay : AppColors.statusBusy
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${partner.batteryLevel}%',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryDay),
+                              ),
+                            ],
+                          ),
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: 20),
-                  ElevatedButton.icon(
+                const Spacer(flex: 2),
+                
+                // Chat Button
+                SizedBox(
+                  height: 48,
+                  child: ElevatedButton.icon(
                     onPressed: () {
                        Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(
                          partnerId: partner.userId,
@@ -281,20 +314,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                        )));
                     },
                     icon: const Icon(Icons.chat_bubble_outline, size: 20),
-                    label: const Text("채팅"),
+                    label: const Text("채팅하기"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: AppColors.textPrimaryDay,
+                      elevation: 0,
+                      side: const BorderSide(color: AppColors.borderDay),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    ),
                   ),
-                  const SizedBox(height: 24),
-                ],
-              ),
+                ),
+                const Spacer(flex: 2),
+              ],
             ),
           ),
         ),
 
-        // My Area (Bottom 45%) - Floating Control
+        // My Area (Bottom 45%)
         Expanded(
-          flex: 35,
+          flex: 45,
           child: Container(
-             padding: const EdgeInsets.all(24),
+             padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
              child: Column(
                mainAxisAlignment: MainAxisAlignment.center,
                children: [
@@ -308,7 +348,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                       );
                    },
-                   padding: const EdgeInsets.all(20),
+                   padding: const EdgeInsets.all(24),
                    child: Row(
                      children: [
                        Container(
@@ -317,45 +357,41 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                            color: state.myStatus.color.withOpacity(0.1),
                            shape: BoxShape.circle,
                          ),
-                         child: Icon(state.myStatus.icon, color: state.myStatus.color, size: 36),
+                         child: Icon(state.myStatus.icon, color: state.myStatus.color, size: 32),
                        ),
-                       const SizedBox(width: 20),
-                       Column(
-                         crossAxisAlignment: CrossAxisAlignment.start,
-                         children: [
-                           Text('나의 상태', style: Theme.of(context).textTheme.bodySmall),
-                           const SizedBox(height: 4),
-                           Text(
-                             state.myStatus.label,
-                             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                               color: state.myStatus.color
+                       const SizedBox(width: 24),
+                       Expanded(
+                         child: Column(
+                           crossAxisAlignment: CrossAxisAlignment.start,
+                           children: [
+                             Text('나의 상태', style: Theme.of(context).textTheme.bodySmall),
+                             const SizedBox(height: 4),
+                             Text(
+                               state.myStatus.label,
+                               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                 color: state.myStatus.color,
+                                 fontWeight: FontWeight.bold,
+                               ),
                              ),
-                           ),
-                         ],
+                           ],
+                         ),
                        ),
-                       const Spacer(),
-                       const Icon(Icons.arrow_forward_ios_rounded, color: AppColors.textSecondaryDay, size: 20),
+                       const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textSecondaryDay, size: 28),
                      ],
                    ),
                  ),
-                 const SizedBox(height: 20),
-                 const Text(
-                   "상태를 변경하려면 탭하세요",
-                   style: TextStyle(color: AppColors.textSecondaryDay),
+                 const SizedBox(height: 16),
+                 Text(
+                   state.serviceStatusMessage.isNotEmpty ? state.serviceStatusMessage : "상태 카드를 눌러 변경해보세요",
+                   textAlign: TextAlign.center,
+                   style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryDay),
                  ),
-                 if (state.serviceStatusMessage.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 20),
-                      child: Text(state.serviceStatusMessage, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                    ),
                ],
              ),
           ),
         ),
       ],
-    ),
-   ],
-  );
+    );
   }
 
   String _formatTime(DateTime time) {

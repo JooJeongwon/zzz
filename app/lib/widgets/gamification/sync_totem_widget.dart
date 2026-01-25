@@ -42,7 +42,7 @@ class _SyncTotemWidgetState extends State<SyncTotemWidget> {
     }
 
     _updateDuration();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _updateDuration());
+    _timer = Timer.periodic(const Duration(seconds: 60), (_) => _updateDuration()); // Update every minute is enough for display
   }
 
   void _updateDuration() {
@@ -62,101 +62,45 @@ class _SyncTotemWidgetState extends State<SyncTotemWidget> {
   Widget build(BuildContext context) {
     if (widget.syncStartTime == null) return const SizedBox.shrink();
 
-    // 1 hour to reach 50% screen height as an example base
-    final double screenHeight = MediaQuery.of(context).size.height;
-    final double fillPercentage = (_duration.inSeconds / 3600.0).clamp(0.0, 1.0);
-    final double height = (screenHeight * 0.4 * fillPercentage) + 80; 
-
+    // Matte, Flat Design (No Gradient, No Shadow)
     final color = widget.status.color;
-
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: IgnorePointer(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-             // Duration Text
-             Container(
-               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-               decoration: BoxDecoration(
-                 color: Colors.white.withOpacity(0.9),
-                 borderRadius: BorderRadius.circular(20),
-                 boxShadow: [
-                   BoxShadow(
-                     color: color.withOpacity(0.3),
-                     blurRadius: 10,
-                   )
-                 ]
-               ),
-               child: Row(
-                 mainAxisSize: MainAxisSize.min,
-                 children: [
-                   Icon(Icons.timer, size: 16, color: color),
-                   const SizedBox(width: 4),
-                   Text(
-                     _formatDuration(_duration),
-                     style: TextStyle(
-                       color: color,
-                       fontWeight: FontWeight.bold,
-                       fontSize: 14,
-                     ),
-                   ),
-                 ],
-               ),
-             ),
-             const SizedBox(height: 12),
-             
-             // Totem Body
-             Stack(
-               alignment: Alignment.bottomCenter,
-               children: [
-                 // Glow
-                 Container(
-                   width: 100,
-                   height: height,
-                   decoration: BoxDecoration(
-                     gradient: LinearGradient(
-                       begin: Alignment.bottomCenter,
-                       end: Alignment.topCenter,
-                       colors: [
-                         color.withOpacity(0.4),
-                         color.withOpacity(0.0),
-                       ],
-                     ),
-                   ),
-                 ),
-                 // Core Pillar
-                 AnimatedContainer(
-                   duration: const Duration(seconds: 1),
-                   width: 40,
-                   height: height,
-                   decoration: BoxDecoration(
-                     color: color.withOpacity(0.2),
-                     borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                     border: Border.all(color: color.withOpacity(0.5), width: 2),
-                     boxShadow: [
-                       BoxShadow(
-                         color: color.withOpacity(0.2),
-                         blurRadius: 15,
-                         spreadRadius: 2,
-                       )
-                     ]
-                   ),
-                 ),
-                 // Floating Particles or Decor (Simplified for now)
-               ],
-             ),
-          ],
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1), // Flat tint background
+        borderRadius: BorderRadius.circular(20), // Soft Corner
+        border: Border.all(
+          color: color.withOpacity(0.3), // Subtle border
+          width: 1,
         ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.history, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(
+            _formatDuration(_duration),
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              letterSpacing: -0.5,
+            ),
+          ),
+        ],
       ),
     );
   }
 
   String _formatDuration(Duration d) {
-    String twoDigits(int n) => n.toString().padLeft(2, "0");
-    String twoDigitMinutes = twoDigits(d.inMinutes.remainder(60));
-    return "${twoDigits(d.inHours)}:$twoDigitMinutes";
+    if (d.inMinutes < 60) {
+      return "${d.inMinutes}분째";
+    } else {
+      final hours = d.inHours;
+      final minutes = d.inMinutes.remainder(60);
+      return "${hours}시간 ${minutes}분째";
+    }
   }
 }

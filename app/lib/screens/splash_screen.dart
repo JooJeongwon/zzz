@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/result.dart';
 import '../providers/api_provider.dart';
 import 'home_screen.dart';
 import 'login_screen.dart';
@@ -32,11 +33,22 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     if (!mounted) return;
 
     if (token != null && userId != null) {
-      // Validate token simply by checking existence or making a dummy call if needed
-      // For now, assume valid if exists
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
+      // Validate token with a real API call to ensure session is active
+      final result = await api.getPartnerStatus();
+
+      if (!mounted) return;
+
+      if (result is Success) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      } else {
+        // Token is invalid, expired, or server error -> Force re-login
+        await api.logout();
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      }
     } else {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const LoginScreen()),

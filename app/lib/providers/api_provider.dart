@@ -26,6 +26,11 @@ final dioProvider = Provider<Dio>((ref) {
   // 2. Interceptors
   dio.interceptors.add(InterceptorsWrapper(
     onRequest: (options, handler) async {
+      // Skip token for login/register to prevent sending expired tokens
+      if (options.path.contains('/users/login') || options.path.contains('/users/register')) {
+        return handler.next(options);
+      }
+
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('accessToken');
       if (token != null) {

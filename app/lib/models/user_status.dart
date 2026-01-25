@@ -12,12 +12,12 @@ enum UserStatus {
 
   String get label {
     switch (this) {
-      case UserStatus.ONLINE: return 'Online';
-      case UserStatus.SLEEP: return 'Sleeping';
-      case UserStatus.STUDY: return 'Studying';
-      case UserStatus.BUSY: return 'Busy';
-      case UserStatus.DISCHARGED: return 'Battery Dead';
-      default: return 'Unknown';
+      case UserStatus.ONLINE: return '접속 중';
+      case UserStatus.SLEEP: return '수면 중';
+      case UserStatus.STUDY: return '열공 중';
+      case UserStatus.BUSY: return '바쁨';
+      case UserStatus.DISCHARGED: return '배터리 방전';
+      default: return '상태 미설정';
     }
   }
 
@@ -28,7 +28,7 @@ enum UserStatus {
       case UserStatus.STUDY: return const Color(0xFF55EFC4); // AppColors.statusStudy
       case UserStatus.BUSY: return const Color(0xFFFF7675); // AppColors.statusBusy
       case UserStatus.DISCHARGED: return const Color(0xFF718096); // AppColors.textSecondaryNight
-      case UserStatus.UNKNOWN: return const Color(0xFFEEEEEE); // AppColors.borderDay
+      case UserStatus.UNKNOWN: return const Color(0xFFB0BEC5); // Visible Gray
     }
   }
 

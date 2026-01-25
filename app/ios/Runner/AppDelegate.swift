@@ -60,8 +60,25 @@ import BackgroundTasks
             }
         })
 
+        // Auto-start heartbeat on launch if credentials exist
+        if let baseUrl = UserDefaults.standard.string(forKey: "heartbeat_base_url"),
+           let accessToken = UserDefaults.standard.string(forKey: "heartbeat_access_token") {
+            print("ZZZ: Auto-starting heartbeat on launch")
+            self.performHeartbeat(baseUrl: baseUrl, accessToken: accessToken) { _, _ in }
+        }
+
         GeneratedPluginRegistrant.register(with: self)
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    }
+    
+    override func applicationDidBecomeActive(_ application: UIApplication) {
+        super.applicationDidBecomeActive(application)
+        // Auto-start heartbeat when app comes to foreground
+        if let baseUrl = UserDefaults.standard.string(forKey: "heartbeat_base_url"),
+           let accessToken = UserDefaults.standard.string(forKey: "heartbeat_access_token") {
+            print("ZZZ: Auto-starting heartbeat on foreground")
+            self.performHeartbeat(baseUrl: baseUrl, accessToken: accessToken) { _, _ in }
+        }
     }
     
     override func applicationDidEnterBackground(_ application: UIApplication) {
