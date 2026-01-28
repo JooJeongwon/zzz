@@ -21,8 +21,8 @@ class Settings(BaseSettings):
 
     # Gemini
     GEMINI_API_KEY: str
-    GEMINI_MODEL_NAME: str = "gemini-1.5-flash"
-    GEMINI_EMBEDDING_MODEL: str = "models/embedding-001"
+    GEMINI_MODEL_NAME: str = "models/gemini-2.0-flash"
+    GEMINI_EMBEDDING_MODEL: str = "models/gemini-embedding-001"
     
     # Vector DB (Pinecone)
     PINECONE_API_KEY: Optional[str] = None

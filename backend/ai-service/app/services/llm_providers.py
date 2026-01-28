@@ -27,7 +27,7 @@ class LLMProvider(ABC):
 
 class MockLLMProvider(LLMProvider):
     def get_embedding(self, text: str) -> Optional[List[float]]:
-        # Return dummy embedding vector of size 768 (Gemini embedding-001 size)
+        # Return dummy embedding vector of size 768 (Gemini gemini-embedding-001 size)
         return [0.1] * 768
 
     def generate_response(self, system_prompt: str, user_message: str) -> str:

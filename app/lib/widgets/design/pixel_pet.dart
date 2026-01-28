@@ -145,7 +145,7 @@ class _PixelPetPainter extends CustomPainter {
       _drawAura(canvas, size, ps);
     }
 
-    // 2. Draw Pet
+    // Draw Pet
     final paint = Paint()..color = _primaryColor;
 
     // Draw Bear Shape (Pixel Art)
@@ -156,13 +156,13 @@ class _PixelPetPainter extends CustomPainter {
     _addRect(bodyPixels, 5, 5, 4, 3, ps); // Left Ear
     _addRect(bodyPixels, 15, 5, 4, 3, ps); // Right Ear
     
-    // Head Main
-    _addRect(bodyPixels, 4, 8, 16, 10, ps);
-    // Rounding Head
-    _removeRect(bodyPixels, 4, 8, 1, 1, ps);
-    _removeRect(bodyPixels, 19, 8, 1, 1, ps);
-    _removeRect(bodyPixels, 4, 17, 1, 1, ps);
-    _removeRect(bodyPixels, 19, 17, 1, 1, ps);
+    // Head Construction (Rounded)
+    // Top Row (Narrower)
+    _addRect(bodyPixels, 5, 8, 14, 1, ps); 
+    // Middle Block (Full Width)
+    _addRect(bodyPixels, 4, 9, 16, 8, ps);
+    // Bottom Row (Narrower)
+    _addRect(bodyPixels, 5, 17, 14, 1, ps);
 
     // Body (Shoulders)
     _addRect(bodyPixels, 6, 18, 12, 4, ps);
@@ -220,6 +220,7 @@ class _PixelPetPainter extends CustomPainter {
     } else if (status == UserStatus.BUSY) {
         // Sweat drops
         final sweatPaint = Paint()..color = Colors.blueAccent;
+        // Adjusted position for rounded head
         canvas.drawRect(Rect.fromLTWH(21 * ps, 8 * ps, 1 * ps, 2 * ps), sweatPaint);
         canvas.drawRect(Rect.fromLTWH(20 * ps, 10 * ps, 1 * ps, 1 * ps), sweatPaint);
     }
@@ -368,18 +369,7 @@ class _PixelPetPainter extends CustomPainter {
     list.add(Rect.fromLTWH(x * ps, y * ps, w * ps, h * ps));
   }
   
-  void _removeRect(List<Rect> list, double x, double y, double w, double h, double ps) {
-    // This is naive, actually we just don't add it. 
-    // Since we are building a list of positive rects, 'remove' logic implies we should have not added it.
-    // Instead, I'll just check collision or build smartly.
-    // For now, I'll just skip this helper and rely on construction order if needed?
-    // Actually, CustomPainter just paints over.
-    // So to "remove", I can't really remove unless I use a path or clip.
-    // But since I'm just drawing rects, "removing" means just not drawing there.
-    // My previous logic called _removeRect on areas already added? No, I need to restructure construction.
-    // Simple pixel art: Just iterate coordinates.
-    // For this demo, let's keep it additive.
-  }
+
 
   @override
   bool shouldRepaint(covariant _PixelPetPainter old) {
